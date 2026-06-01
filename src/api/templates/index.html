@@ -42,12 +42,6 @@
             padding: 0;
         }
 
-        /* ── Target Cursor Hide Default (Desktop) ── */
-        @media (min-width: 769px) {
-            body, a, button, input, select, textarea, .machine-card, .sim-slider {
-                cursor: none !important;
-            }
-        }
 
         body {
             font-family: var(--font-inter);
@@ -779,69 +773,6 @@
             box-shadow: inset 5px 0 10px rgba(0,0,0,0.05);
         }
 
-        /* ── Target Cursor CSS Styles (React Bits Component translated to Vanilla JS) ── */
-        .target-cursor-wrapper {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 24px;
-            height: 24px;
-            pointer-events: none;
-            z-index: 99999;
-            display: none;
-            transform: translate(-50%, -50%);
-        }
-        
-        @media (max-width: 768px) {
-            .target-cursor-wrapper {
-                display: none !important;
-            }
-        }
-        
-        .target-cursor-dot {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 5px;
-            height: 5px;
-            background-color: var(--primary);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 10px var(--primary);
-            transition: transform 0.2s ease;
-        }
-        
-        .target-cursor-corner {
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            border-color: var(--primary);
-            border-style: solid;
-            pointer-events: none;
-            box-sizing: border-box;
-            filter: drop-shadow(0 0 4px var(--primary-glow));
-        }
-        
-        .corner-tl {
-            top: 0;
-            left: 0;
-            border-width: 2px 0 0 2px;
-        }
-        .corner-tr {
-            top: 0;
-            right: 0;
-            border-width: 2px 2px 0 0;
-        }
-        .corner-br {
-            bottom: 0;
-            right: 0;
-            border-width: 0 2px 2px 0;
-        }
-        .corner-bl {
-            bottom: 0;
-            left: 0;
-            border-width: 0 0 2px 2px;
-        }
 
         /* Responsive */
         @media (max-width: 1100px) {
@@ -1034,14 +965,6 @@
         </section>
     </main>
 
-    <!-- Target Cursor HTML (React Bits Component translated to Vanilla JS) -->
-    <div id="target-cursor-wrapper" class="target-cursor-wrapper">
-        <div id="target-cursor-dot" class="target-cursor-dot"></div>
-        <div class="target-cursor-corner corner-tl"></div>
-        <div class="target-cursor-corner corner-tr"></div>
-        <div class="target-cursor-corner corner-br"></div>
-        <div class="target-cursor-corner corner-bl"></div>
-    </div>
 
     <script>
         // Global State variables
@@ -1090,8 +1013,6 @@
             // Initialize background active scanner grid (React Bits ShapeGrid)
             initShapeGrid();
 
-            // Initialize target cursor (React Bits translation)
-            initTargetCursor();
 
             // Slider listeners
             slideVibration.addEventListener('input', () => { valVibration.innerText = `${slideVibration.value} mm/s`; });
@@ -1485,177 +1406,6 @@
             requestAnimationFrame(updateAnimation);
         }
 
-        // ── Custom Target Cursor Engine (Vanilla JS translation of React Bits component) ──
-        function initTargetCursor() {
-            const isMobile = (window.innerWidth <= 768) || ('ontouchstart' in window || navigator.maxTouchPoints > 0);
-            if (isMobile) return;
-
-            const wrapper = document.getElementById('target-cursor-wrapper');
-            const dot = document.getElementById('target-cursor-dot');
-            const corners = document.querySelectorAll('.target-cursor-corner');
-
-            if (!wrapper) return;
-            wrapper.style.display = 'block';
-
-            // Targeted selectors that cursor frames around
-            const targetSelector = '.machine-card, .btn, .sim-control-group, .search-input, .status-badge';
-            const spinDuration = 3.5;
-            const hoverDuration = 0.22;
-            const cornerSize = 8;
-            const borderWidth = 2;
-
-            let activeTarget = null;
-            let activeStrength = { current: 0 };
-            let spinTl = null;
-            let resumeTimeout = null;
-
-            // Set initial cursor centered in viewport
-            gsap.set(wrapper, {
-                xPercent: -50,
-                yPercent: -50,
-                x: window.innerWidth / 2,
-                y: window.innerHeight / 2
-            });
-
-            // continuous rotation timeline
-            const createSpinTimeline = () => {
-                if (spinTl) spinTl.kill();
-                spinTl = gsap.timeline({ repeat: -1 })
-                    .to(wrapper, { rotation: '+=360', duration: spinDuration, ease: 'none' });
-            };
-            createSpinTimeline();
-
-            // Smooth pointer tracking (GSAP damped follow)
-            const moveCursor = (x, y) => {
-                gsap.to(wrapper, {
-                    x,
-                    y,
-                    duration: 0.08,
-                    ease: 'power2.out'
-                });
-            };
-
-            window.addEventListener('mousemove', (e) => {
-                moveCursor(e.clientX, e.clientY);
-            });
-
-            // Ticker function: frames target element by drawing bounding box corners
-            const tickerFn = () => {
-                if (!activeTarget || !wrapper || !corners) return;
-                const strength = activeStrength.current;
-                if (strength === 0) return;
-
-                const rect = activeTarget.getBoundingClientRect();
-                const cursorX = gsap.getProperty(wrapper, 'x');
-                const cursorY = gsap.getProperty(wrapper, 'y');
-
-                const targetPositions = [
-                    { x: rect.left - borderWidth, y: rect.top - borderWidth },
-                    { x: rect.right + borderWidth - cornerSize, y: rect.top - borderWidth },
-                    { x: rect.right + borderWidth - cornerSize, y: rect.bottom + borderWidth - cornerSize },
-                    { x: rect.left - borderWidth, y: rect.bottom + borderWidth - cornerSize }
-                ];
-
-                corners.forEach((corner, i) => {
-                    const currentX = gsap.getProperty(corner, 'x');
-                    const currentY = gsap.getProperty(corner, 'y');
-
-                    const targetX = targetPositions[i].x - cursorX;
-                    const targetY = targetPositions[i].y - cursorY;
-
-                    const finalX = currentX + (targetX - currentX) * strength;
-                    const finalY = currentY + (targetY - currentY) * strength;
-
-                    // Elastic tracking lock
-                    gsap.to(corner, {
-                        x: finalX,
-                        y: finalY,
-                        duration: strength >= 0.99 ? 0.22 : 0.05,
-                        ease: 'power1.out',
-                        overwrite: 'auto'
-                    });
-                });
-            };
-
-            // Clicking compress micro-animations
-            window.addEventListener('mousedown', () => {
-                gsap.to(dot, { scale: 0.6, duration: 0.2 });
-                gsap.to(wrapper, { scale: 0.85, duration: 0.2 });
-            });
-            window.addEventListener('mouseup', () => {
-                gsap.to(dot, { scale: 1, duration: 0.2 });
-                gsap.to(wrapper, { scale: 1, duration: 0.2 });
-            });
-
-            // Mouse hover snap listener
-            window.addEventListener('mouseover', (e) => {
-                if (!e.target || typeof e.target.closest !== 'function') return;
-                const target = e.target.closest(targetSelector);
-                if (!target || activeTarget === target) return;
-
-                if (resumeTimeout) {
-                    clearTimeout(resumeTimeout);
-                    resumeTimeout = null;
-                }
-
-                activeTarget = target;
-                corners.forEach(corner => gsap.killTweensOf(corner));
-                gsap.killTweensOf(wrapper, 'rotation');
-                if (spinTl) spinTl.pause();
-                
-                // Animate lock alignment
-                gsap.to(wrapper, { rotation: 0, duration: 0.2 });
-
-                gsap.ticker.add(tickerFn);
-                gsap.to(activeStrength, {
-                    current: 1,
-                    duration: hoverDuration,
-                    ease: 'power2.out'
-                });
-
-                // Trigger exit lock handler on leave
-                const leaveHandler = () => {
-                    gsap.ticker.remove(tickerFn);
-                    activeStrength.current = 0;
-                    activeTarget = null;
-
-                    // Reset cursor corners back to standard border positions smoothly
-                    corners.forEach((corner) => {
-                        gsap.to(corner, {
-                            x: 0,
-                            y: 0,
-                            duration: 0.35,
-                            ease: 'power3.out'
-                        });
-                    });
-
-                    // Resume rotation
-                    resumeTimeout = setTimeout(() => {
-                        if (!activeTarget && wrapper && spinTl) {
-                            const currentRotation = gsap.getProperty(wrapper, 'rotation');
-                            const normalizedRotation = currentRotation % 360;
-                            spinTl.kill();
-                            spinTl = gsap.timeline({ repeat: -1 })
-                                .to(wrapper, { rotation: '+=360', duration: spinDuration, ease: 'none' });
-                            
-                            gsap.to(wrapper, {
-                                rotation: normalizedRotation + 360,
-                                duration: spinDuration * (1 - normalizedRotation / 360),
-                                ease: 'none',
-                                onComplete: () => {
-                                    spinTl.restart();
-                                }
-                            });
-                        }
-                        resumeTimeout = null;
-                    }, 50);
-
-                    target.removeEventListener('mouseleave', leaveHandler);
-                };
-
-                target.addEventListener('mouseleave', leaveHandler);
-            }, { passive: true });
-        }
 
         // Fetch all machines
         async function fetchFleet() {
