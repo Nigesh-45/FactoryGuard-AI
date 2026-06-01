@@ -1589,6 +1589,7 @@
 
             // Mouse hover snap listener
             window.addEventListener('mouseover', (e) => {
+                if (!e.target || typeof e.target.closest !== 'function') return;
                 const target = e.target.closest(targetSelector);
                 if (!target || activeTarget === target) return;
 
