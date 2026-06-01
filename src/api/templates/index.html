@@ -13,22 +13,25 @@
     
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- GSAP (GreenSock Animation Platform) for high-end Framer Motion-like animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 
     <style>
         :root {
-            --bg-dark: #0b0f19;
-            --card-bg: rgba(22, 30, 49, 0.7);
-            --card-border: rgba(255, 255, 255, 0.08);
-            --primary: #4f46e5;
-            --primary-glow: rgba(79, 70, 229, 0.4);
+            --bg-dark: #070a13;
+            --card-bg: rgba(15, 23, 42, 0.45);
+            --card-border: rgba(255, 255, 255, 0.06);
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.35);
             --success: #10b981;
-            --success-glow: rgba(16, 185, 129, 0.2);
+            --success-glow: rgba(16, 185, 129, 0.25);
             --warning: #f59e0b;
-            --warning-glow: rgba(245, 158, 11, 0.2);
-            --danger: #ef4444;
-            --danger-glow: rgba(239, 68, 68, 0.2);
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
+            --warning-glow: rgba(245, 158, 11, 0.25);
+            --danger: #f43f5e;
+            --danger-glow: rgba(244, 63, 94, 0.25);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
             --font-outfit: 'Outfit', sans-serif;
             --font-inter: 'Inter', sans-serif;
         }
@@ -42,40 +45,77 @@
         body {
             font-family: var(--font-inter);
             background-color: var(--bg-dark);
-            background-image: 
-                radial-gradient(at 10% 20%, rgba(79, 70, 229, 0.15) 0px, transparent 50%),
-                radial-gradient(at 90% 80%, rgba(239, 68, 68, 0.1) 0px, transparent 50%);
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             overflow-x: hidden;
+            position: relative;
+        }
+
+        /* ── Morphing Background Glow Orbs (React Bits Aesthetic) ── */
+        .glow-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(140px);
+            opacity: 0.32;
+            z-index: -2;
+            pointer-events: none;
+        }
+        .orb-1 {
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, var(--primary) 0%, transparent 80%);
+            top: -100px;
+            left: -100px;
+            animation: morph 20s infinite alternate, float1 30s infinite alternate;
+        }
+        .orb-2 {
+            width: 550px;
+            height: 550px;
+            background: radial-gradient(circle, var(--danger) 0%, transparent 80%);
+            bottom: -150px;
+            right: -150px;
+            animation: morph 25s infinite alternate, float2 35s infinite alternate;
+        }
+        @keyframes morph {
+            0% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+            100% { border-radius: 70% 30% 50% 50% / 30% 60% 40% 70%; }
+        }
+        @keyframes float1 {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(150px, 80px) scale(1.15); }
+        }
+        @keyframes float2 {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-120px, -120px) scale(0.9); }
         }
 
         /* Scrollbar styling */
         ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
         }
         ::-webkit-scrollbar-track {
-            background: rgba(11, 15, 25, 0.5);
+            background: rgba(11, 15, 25, 0.3);
         }
         ::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.22);
         }
 
         /* Glassmorphism Common Styles */
         .glass-panel {
             background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--card-border);
-            border-radius: 16px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.35);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
         /* Header Styles */
@@ -84,23 +124,23 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin: 1rem 2rem 0.5rem 2rem;
+            margin: 1.25rem 2rem 0.5rem 2rem;
             height: 80px;
         }
 
         .logo-section {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.85rem;
         }
 
         .logo-icon {
             font-size: 2.2rem;
-            background: linear-gradient(135deg, #818cf8, #ef4444);
+            background: linear-gradient(135deg, #a5b4fc, var(--danger));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             font-weight: 800;
-            letter-spacing: -1px;
+            letter-spacing: -1.5px;
             font-family: var(--font-outfit);
         }
 
@@ -111,10 +151,10 @@
 
         .logo-title {
             font-family: var(--font-outfit);
-            font-size: 1.4rem;
+            font-size: 1.45rem;
             font-weight: 700;
             letter-spacing: 0.5px;
-            background: linear-gradient(to right, #f3f4f6, #9ca3af);
+            background: linear-gradient(to right, #f8fafc, #94a3b8);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -122,8 +162,8 @@
         .logo-subtitle {
             font-size: 0.75rem;
             color: var(--text-muted);
-            font-weight: 500;
-            letter-spacing: 1px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
             text-transform: uppercase;
         }
 
@@ -137,13 +177,14 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.5rem 1rem;
+            padding: 0.5rem 1.15rem;
             border-radius: 9999px;
             font-size: 0.85rem;
             font-weight: 600;
-            background: rgba(16, 185, 129, 0.1);
+            background: rgba(16, 185, 129, 0.08);
             border: 1px solid rgba(16, 185, 129, 0.2);
             color: var(--success);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.05);
         }
 
         .status-dot {
@@ -152,11 +193,11 @@
             border-radius: 50%;
             background-color: var(--success);
             box-shadow: 0 0 12px var(--success);
-            animation: pulse 2s infinite;
+            animation: pulse-success 2.5s infinite;
         }
 
-        @keyframes pulse {
-            0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+        @keyframes pulse-success {
+            0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
             70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
             100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
@@ -166,17 +207,17 @@
             color: var(--text-muted);
             display: flex;
             align-items: center;
-            gap: 0.35rem;
+            gap: 0.4rem;
         }
 
         /* Main Workspace Layout */
         main {
             display: grid;
-            grid-template-columns: 350px 1fr;
+            grid-template-columns: 360px 1fr;
             gap: 1.5rem;
             padding: 1rem 2rem 2rem 2rem;
             flex-grow: 1;
-            max-height: calc(100vh - 120px);
+            max-height: calc(100vh - 125px);
             overflow: hidden;
         }
 
@@ -189,15 +230,15 @@
         }
 
         .panel-header {
-            padding: 1.25rem;
+            padding: 1.5rem;
             border-bottom: 1px solid var(--card-border);
         }
 
         .panel-title {
             font-family: var(--font-outfit);
-            font-size: 1.15rem;
+            font-size: 1.2rem;
             font-weight: 600;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.85rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -210,73 +251,94 @@
 
         .search-input {
             width: 100%;
-            padding: 0.6rem 1rem 0.6rem 2.2rem;
-            background: rgba(11, 15, 25, 0.6);
+            padding: 0.65rem 1rem 0.65rem 2.3rem;
+            background: rgba(7, 10, 19, 0.45);
             border: 1px solid var(--card-border);
-            border-radius: 8px;
+            border-radius: 10px;
             color: var(--text-main);
             font-size: 0.85rem;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
         }
 
         .search-input:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 8px var(--primary-glow);
+            box-shadow: 0 0 12px var(--primary-glow);
         }
 
         .search-icon {
             position: absolute;
-            left: 0.8rem;
+            left: 0.85rem;
             top: 50%;
             transform: translateY(-50%);
             color: var(--text-muted);
-            font-size: 0.9rem;
+            font-size: 0.95rem;
         }
 
         .machine-list {
             flex-grow: 1;
             overflow-y: auto;
-            padding: 0.75rem;
+            padding: 1rem;
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0.65rem;
         }
 
         .machine-card {
-            padding: 0.85rem 1rem;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 0.95rem 1.15rem;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.015);
+            border: 1px solid rgba(255, 255, 255, 0.03);
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex;
             align-items: center;
             justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .machine-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .machine-card:hover::before {
+            opacity: 1;
         }
 
         .machine-card:hover {
-            background: rgba(255, 255, 255, 0.05);
-            border-color: rgba(255, 255, 255, 0.1);
-            transform: translateX(2px);
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px) scale(1.015);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
         }
 
         .machine-card.active {
-            background: rgba(79, 70, 229, 0.15);
-            border-color: rgba(79, 70, 229, 0.4);
-            box-shadow: inset 0 0 10px rgba(79, 70, 229, 0.1);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.16), rgba(99, 102, 241, 0.03));
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.25), inset 0 0 8px rgba(99, 102, 241, 0.1);
         }
 
         .card-left {
             display: flex;
             flex-direction: column;
-            gap: 0.25rem;
+            gap: 0.3rem;
+            position: relative;
+            z-index: 1;
         }
 
         .card-id {
             font-family: var(--font-outfit);
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 1rem;
         }
 
         .card-metrics {
@@ -290,27 +352,29 @@
             display: flex;
             flex-direction: column;
             align-items: flex-end;
-            gap: 0.25rem;
+            gap: 0.3rem;
+            position: relative;
+            z-index: 1;
         }
 
         .card-prob {
             font-family: var(--font-outfit);
             font-weight: 700;
-            font-size: 0.95rem;
+            font-size: 1rem;
         }
 
         .card-status {
             font-size: 0.65rem;
             text-transform: uppercase;
             font-weight: 700;
-            letter-spacing: 0.5px;
-            padding: 0.15rem 0.4rem;
+            letter-spacing: 0.75px;
+            padding: 0.15rem 0.5rem;
             border-radius: 4px;
         }
 
         .status-normal { color: var(--success); background: rgba(16, 185, 129, 0.1); }
         .status-warning { color: var(--warning); background: rgba(245, 158, 11, 0.1); }
-        .status-critical { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+        .status-critical { color: var(--danger); background: rgba(244, 63, 94, 0.1); }
 
         /* Right Panel - Machine Inspector */
         .inspector-panel {
@@ -321,7 +385,7 @@
         }
 
         .inspector-header {
-            padding: 1.25rem 2rem;
+            padding: 1.5rem 2rem;
             border-bottom: 1px solid var(--card-border);
             display: flex;
             justify-content: space-between;
@@ -331,12 +395,12 @@
         .inspector-title-block {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 1.25rem;
         }
 
         .selected-machine-badge {
             font-family: var(--font-outfit);
-            font-size: 1.6rem;
+            font-size: 1.85rem;
             font-weight: 800;
             letter-spacing: -0.5px;
             color: var(--text-main);
@@ -345,11 +409,32 @@
         .selected-machine-state {
             font-size: 0.85rem;
             font-weight: 600;
-            padding: 0.25rem 0.75rem;
+            padding: 0.3rem 0.85rem;
             border-radius: 9999px;
             display: flex;
             align-items: center;
-            gap: 0.4rem;
+            gap: 0.45rem;
+            transition: all 0.3s ease;
+        }
+
+        .selected-machine-state.status-normal span { animation: pulse-indicator-success 2s infinite; }
+        .selected-machine-state.status-warning span { animation: pulse-indicator-warning 2s infinite; }
+        .selected-machine-state.status-critical span { animation: pulse-indicator-danger 2s infinite; }
+
+        @keyframes pulse-indicator-success {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8); }
+            70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        @keyframes pulse-indicator-warning {
+            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.8); }
+            70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+        @keyframes pulse-indicator-danger {
+            0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.8); }
+            70% { box-shadow: 0 0 0 6px rgba(244, 63, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
         }
 
         .inspector-body {
@@ -374,10 +459,16 @@
 
         /* Card Section Styles */
         .section-card {
-            background: rgba(11, 15, 25, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            border-radius: 12px;
-            padding: 1.25rem;
+            background: rgba(15, 23, 42, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .section-card:hover {
+            border-color: rgba(255, 255, 255, 0.06);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
         }
 
         .section-title {
@@ -385,9 +476,9 @@
             font-size: 0.95rem;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.25px;
             color: var(--text-muted);
-            margin-bottom: 1rem;
+            margin-bottom: 1.25rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -397,18 +488,25 @@
         .simulator-inputs {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-            margin-bottom: 1.25rem;
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
         }
 
         .sim-control-group {
             display: flex;
             flex-direction: column;
-            gap: 0.4rem;
-            background: rgba(255, 255, 255, 0.01);
-            border: 1px solid rgba(255, 255, 255, 0.02);
-            border-radius: 8px;
-            padding: 0.75rem;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.012);
+            border: 1px solid rgba(255, 255, 255, 0.015);
+            border-radius: 10px;
+            padding: 0.9rem;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .sim-control-group:hover {
+            background: rgba(255, 255, 255, 0.025);
+            border-color: rgba(255, 255, 255, 0.05);
+            transform: translateY(-1px);
         }
 
         .sim-label {
@@ -423,13 +521,13 @@
             font-family: var(--font-outfit);
             font-weight: 700;
             color: var(--text-main);
-            font-size: 0.95rem;
+            font-size: 1rem;
         }
 
         .sim-slider {
             width: 100%;
             height: 4px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.08);
             border-radius: 2px;
             outline: none;
             -webkit-appearance: none;
@@ -438,70 +536,76 @@
 
         .sim-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 12px;
-            height: 12px;
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
             background: var(--text-main);
             cursor: pointer;
-            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+            box-shadow: 0 0 6px rgba(0,0,0,0.6);
             transition: transform 0.1s ease;
         }
 
         .sim-slider::-webkit-slider-thumb:hover {
-            transform: scale(1.3);
+            transform: scale(1.35);
         }
 
         .sim-actions {
             display: flex;
-            gap: 0.75rem;
+            gap: 0.85rem;
         }
 
         .btn {
-            padding: 0.6rem 1rem;
-            border-radius: 8px;
+            padding: 0.65rem 1.25rem;
+            border-radius: 10px;
             font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             outline: none;
             border: none;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.4rem;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
         }
 
         .btn-primary {
             background: var(--primary);
             color: #fff;
-            box-shadow: 0 4px 12px var(--primary-glow);
+            box-shadow: 0 6px 18px var(--primary-glow);
         }
 
         .btn-primary:hover {
-            background: #5a52e6;
-            transform: translateY(-1px);
+            background: #4f46e5;
+            box-shadow: 0 8px 24px rgba(79, 70, 229, 0.5);
         }
 
         .btn-success-outline {
-            background: rgba(16, 185, 129, 0.08);
+            background: rgba(16, 185, 129, 0.06);
             border: 1px solid rgba(16, 185, 129, 0.2);
             color: var(--success);
         }
 
         .btn-success-outline:hover {
             background: rgba(16, 185, 129, 0.15);
-            border-color: rgba(16, 185, 129, 0.4);
+            border-color: rgba(16, 185, 129, 0.45);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
         }
 
         .btn-danger-outline {
-            background: rgba(239, 68, 68, 0.08);
-            border: 1px solid rgba(239, 68, 68, 0.2);
+            background: rgba(244, 63, 94, 0.06);
+            border: 1px solid rgba(244, 63, 94, 0.2);
             color: var(--danger);
         }
 
         .btn-danger-outline:hover {
-            background: rgba(239, 68, 68, 0.15);
-            border-color: rgba(239, 68, 68, 0.4);
+            background: rgba(244, 63, 94, 0.15);
+            border-color: rgba(244, 63, 94, 0.45);
+            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.15);
         }
 
         /* Multi-Line Telemetry Chart */
@@ -518,18 +622,18 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            padding: 2rem 1.25rem;
+            padding: 2.25rem 1.5rem;
             position: relative;
         }
 
         .gauge-outer {
-            width: 160px;
-            height: 160px;
+            width: 170px;
+            height: 170px;
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 1.25rem;
+            margin-bottom: 1.5rem;
         }
 
         .gauge-svg {
@@ -540,7 +644,7 @@
 
         .gauge-bg {
             fill: none;
-            stroke: rgba(255, 255, 255, 0.05);
+            stroke: rgba(255, 255, 255, 0.03);
             stroke-width: 12;
         }
 
@@ -551,7 +655,7 @@
             stroke-dasharray: 440;
             stroke-dashoffset: 440;
             stroke-linecap: round;
-            transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.8s ease;
+            /* Handled by GSAP smoothly */
         }
 
         .gauge-center-text {
@@ -564,10 +668,10 @@
 
         .gauge-percentage {
             font-family: var(--font-outfit);
-            font-size: 2.2rem;
+            font-size: 2.4rem;
             font-weight: 800;
             line-height: 1;
-            background: linear-gradient(135deg, #fff, #9ca3af);
+            background: linear-gradient(135deg, #fff, #cbd5e1);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -576,28 +680,30 @@
             font-size: 0.75rem;
             color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-top: 0.2rem;
+            letter-spacing: 0.75px;
+            margin-top: 0.25rem;
         }
 
         .gauge-alert-text {
             font-family: var(--font-outfit);
-            font-size: 0.95rem;
+            font-size: 1rem;
             font-weight: 700;
             margin-top: 0.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
         }
 
         /* SHAP Explainability Risk Breakdown */
         .shap-factors-list {
             display: flex;
             flex-direction: column;
-            gap: 0.85rem;
+            gap: 1rem;
         }
 
         .shap-factor-row {
             display: flex;
             flex-direction: column;
-            gap: 0.35rem;
+            gap: 0.4rem;
         }
 
         .shap-factor-meta {
@@ -607,7 +713,7 @@
         }
 
         .shap-factor-name {
-            font-weight: 500;
+            font-weight: 600;
             color: var(--text-main);
         }
 
@@ -618,7 +724,7 @@
         .shap-bar-container {
             width: 100%;
             height: 8px;
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.04);
             border-radius: 4px;
             overflow: hidden;
             position: relative;
@@ -627,8 +733,7 @@
         .shap-bar {
             height: 100%;
             border-radius: 4px;
-            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.8s ease;
-            width: 0%;
+            width: 0%; /* Animate elastically with GSAP */
         }
 
         .shap-bar.increase {
@@ -641,13 +746,14 @@
 
         .shap-explanation-summary {
             font-size: 0.8rem;
-            line-height: 1.4;
+            line-height: 1.45;
             color: var(--text-muted);
-            margin-top: 1rem;
-            padding: 0.75rem;
-            background: rgba(255, 255, 255, 0.02);
+            margin-top: 1.25rem;
+            padding: 0.85rem;
+            background: rgba(255, 255, 255, 0.015);
             border-left: 3px solid var(--primary);
-            border-radius: 0 6px 6px 0;
+            border-radius: 0 8px 8px 0;
+            box-shadow: inset 5px 0 10px rgba(0,0,0,0.05);
         }
 
         /* Responsive */
@@ -665,12 +771,16 @@
                 height: auto;
                 flex-direction: column;
                 gap: 1rem;
-                padding: 1rem;
+                padding: 1.25rem;
             }
         }
     </style>
 </head>
 <body>
+
+    <!-- Morphing Glow Elements in Background (React Bits Style) -->
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
 
     <header class="glass-panel">
         <div class="logo-section">
@@ -709,7 +819,6 @@
                 </div>
             </div>
             <div class="machine-list" id="machine-list-container">
-                <!-- Machine Cards dynamically injected here -->
                 <div style="padding:2rem; text-align:center; color:var(--text-muted);">
                     Loading fleet status...
                 </div>
@@ -821,7 +930,6 @@
                         <h2 class="section-title">SHAP Predictive Risk Contributions</h2>
                         
                         <div class="shap-factors-list" id="shap-factors-container">
-                            <!-- Injected dynamically -->
                             <div style="font-size:0.85rem; color:var(--text-muted); text-align:center; padding:1rem 0;">
                                 Select a machine or inject data to compute SHAP contributions.
                             </div>
@@ -842,6 +950,7 @@
         let fleetData = [];
         let trendChartObj = null;
         let recentHistory = [];
+        let isFirstLoad = true; // flag to only trigger GSAP stagger on initial page load
 
         // DOM elements
         const searchInput = document.getElementById('search-input');
@@ -874,6 +983,11 @@
             fetchFleet();
             initChart();
             
+            // GSAP header & panel reveal
+            gsap.from("header", { opacity: 0, y: -30, duration: 0.8, ease: "power3.out" });
+            gsap.from(".fleet-panel", { opacity: 0, x: -40, duration: 1.0, delay: 0.2, ease: "power3.out" });
+            gsap.from(".inspector-panel", { opacity: 0, x: 40, duration: 1.0, delay: 0.2, ease: "power3.out" });
+
             // Slider listeners
             slideVibration.addEventListener('input', () => { valVibration.innerText = `${slideVibration.value} mm/s`; });
             slideTemperature.addEventListener('input', () => { valTemperature.innerText = `${slideTemperature.value} °C`; });
@@ -911,7 +1025,7 @@
             }
         }
 
-        // Render fleet list in left panel
+        // Render fleet list in left panel with GSAP Entrance Stagger
         function renderFleetList() {
             const query = searchInput.value.toLowerCase();
             machineListContainer.innerHTML = '';
@@ -926,7 +1040,6 @@
             filtered.forEach(m => {
                 const isSelected = m.machine_id === selectedMachineId;
                 const statusClass = m.status === 'CRITICAL' ? 'status-critical' : m.status === 'WARNING' ? 'status-warning' : 'status-normal';
-                const statusCircleColor = m.status === 'CRITICAL' ? 'var(--danger)' : m.status === 'WARNING' ? 'var(--warning)' : 'var(--success)';
                 
                 const card = document.createElement('div');
                 card.className = `machine-card ${isSelected ? 'active' : ''}`;
@@ -945,6 +1058,18 @@
                 
                 machineListContainer.appendChild(card);
             });
+
+            // Play staggered reveal animation ONLY on initial load
+            if (isFirstLoad) {
+                gsap.from(".machine-card", {
+                    opacity: 0,
+                    x: -25,
+                    duration: 0.6,
+                    stagger: 0.02,
+                    ease: "power2.out"
+                });
+                isFirstLoad = false;
+            }
         }
 
         // Filter fleet list
@@ -964,6 +1089,9 @@
                 if (id === mId) c.classList.add('active');
                 else c.classList.remove('active');
             });
+            
+            // Inspector header transition
+            gsap.fromTo("#inspected-id", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.5)" });
             
             // Get machine history for chart
             try {
@@ -987,7 +1115,7 @@
             }
         }
 
-        // Populate sliders
+        // Populate sliders with animated numbers
         function updateSliders(vib, temp, pres) {
             slideVibration.value = vib;
             slideTemperature.value = temp;
@@ -996,6 +1124,15 @@
             valVibration.innerText = `${vib} mm/s`;
             valTemperature.innerText = `${temp} °C`;
             valPressure.innerText = `${pres.toFixed(2)} Bar`;
+            
+            // Staggered sliders entrance animation on change
+            gsap.from(".sim-control-group", {
+                opacity: 0.7,
+                y: 3,
+                duration: 0.4,
+                stagger: 0.08,
+                ease: "power2.out"
+            });
         }
 
         // Trigger simulation scenario
@@ -1049,19 +1186,13 @@
                 const prob = response.failure_probability;
                 let statusClass = 'status-normal';
                 let stateText = 'Normal Operation';
-                let alertColor = 'var(--success)';
-                let alertBg = 'rgba(16, 185, 129, 0.1)';
                 
                 if (prob >= 0.7) {
                     statusClass = 'status-critical';
                     stateText = '🔴 CRITICAL RISK';
-                    alertColor = 'var(--danger)';
-                    alertBg = 'rgba(239, 68, 68, 0.15)';
                 } else if (prob >= 0.4) {
                     statusClass = 'status-warning';
                     stateText = '🟡 WARNING RISK';
-                    alertColor = 'var(--warning)';
-                    alertBg = 'rgba(245, 158, 11, 0.15)';
                 }
                 
                 inspectedStateBadge.className = `selected-machine-state ${statusClass}`;
@@ -1072,15 +1203,14 @@
                 
                 lastPredictionTime.innerText = `Last evaluated: Just now`;
                 
-                // Update circular progress gauge
+                // Update circular progress gauge (GSAP smooth rollup)
                 updateGauge(prob, response.alert_level);
                 
                 // Update SHAP visualizer
                 updateSHAPFactors(response.top_risk_factors, response.failure_probability_pct);
                 
-                // Append this simulated step to recentHistory locally to dynamically grow our trend charts
+                // Append simulated step to recentHistory locally to dynamically grow charts
                 if (recentHistory.length > 0) {
-                    // Check if last item is same to avoid duplicates or replace
                     const lastHist = recentHistory[recentHistory.length - 1];
                     recentHistory.push({
                         index: lastHist.index + 1,
@@ -1099,33 +1229,52 @@
             }
         }
 
-        // Circular Progress Gauge Update
+        // Circular Progress Gauge Update with GSAP rolling numerical counters (React Bits standard)
         function updateGauge(probability, alertLevel) {
             const pct = probability * 100;
-            gaugePercentText.innerText = `${pct.toFixed(1)}%`;
+            
+            // GSAP numeric rollout animation
+            let currentVal = { val: parseFloat(gaugePercentText.innerText) || 0 };
+            gsap.to(currentVal, {
+                val: pct,
+                duration: 0.8,
+                ease: "power2.out",
+                onUpdate: () => {
+                    gaugePercentText.innerText = `${currentVal.val.toFixed(1)}%`;
+                }
+            });
             
             // Adjust SVG circumference (2 * pi * r = 2 * 3.14 * 70 = 439.6)
             const circumference = 440;
             const offset = circumference - (probability * circumference);
-            gaugeFillCircle.style.strokeDashoffset = offset;
             
-            // Change color gradient
+            // Animate progress circle smoothly
+            gsap.to(gaugeFillCircle, {
+                strokeDashoffset: offset,
+                duration: 0.8,
+                ease: "power2.out"
+            });
+            
+            // Change color gradients and badge levels
             if (probability >= 0.7) {
                 gaugeFillCircle.style.stroke = 'var(--danger)';
                 gaugeAlertBadge.className = 'gauge-alert-text status-critical';
                 gaugeAlertBadge.innerText = '🔴 CRITICAL — Maintain Immediately';
+                gsap.fromTo(gaugeAlertBadge, { scale: 0.95 }, { scale: 1.03, duration: 0.4, ease: "elastic.out(1, 0.3)" });
             } else if (probability >= 0.4) {
                 gaugeFillCircle.style.stroke = 'var(--warning)';
                 gaugeAlertBadge.className = 'gauge-alert-text status-warning';
                 gaugeAlertBadge.innerText = '🟡 WARNING — Monitor Closely';
+                gsap.fromTo(gaugeAlertBadge, { scale: 0.95 }, { scale: 1.0, duration: 0.3, ease: "power2.out" });
             } else {
                 gaugeFillCircle.style.stroke = 'var(--success)';
                 gaugeAlertBadge.className = 'gauge-alert-text status-normal';
                 gaugeAlertBadge.innerText = '🟢 NORMAL — Operational';
+                gsap.fromTo(gaugeAlertBadge, { scale: 0.95 }, { scale: 1.0, duration: 0.3, ease: "power2.out" });
             }
         }
 
-        // Render SHAP risk contribution horizontal bar charts
+        // Render SHAP risk contribution horizontal bar charts with Framer Motion-like Elastic Easing
         function updateSHAPFactors(factors, pctText) {
             shapFactorsContainer.innerHTML = '';
             
@@ -1134,12 +1283,10 @@
                 return;
             }
             
-            // Rank factors by absolute contribution
             factors.forEach(f => {
                 const barClass = f.shap_contribution > 0 ? 'increase' : 'reduce';
-                // Scale value. Since SHAP values range roughly from -10 to +10, absolute percentage works best
                 let percentage = Math.min(100, Math.abs(f.shap_contribution) * 15);
-                if (percentage < 5) percentage = 8; // min visible bar
+                if (percentage < 5) percentage = 8;
                 
                 const sign = f.shap_contribution > 0 ? '+' : '';
                 const displayContribution = `${sign}${f.shap_contribution}`;
@@ -1157,8 +1304,15 @@
                 `;
                 shapFactorsContainer.appendChild(row);
             });
+
+            // GSAP elastic width grow animation for SHAP factors
+            gsap.from(".shap-bar", {
+                width: "0%",
+                duration: 0.85,
+                stagger: 0.08,
+                ease: "elastic.out(1, 0.75)"
+            });
             
-            // Generate floor description
             const primaryFactor = factors[0];
             const directionText = primaryFactor.shap_contribution > 0 ? 'increasing risk' : 'reducing risk';
             shapExplanationSummaryText.innerText = `
@@ -1166,6 +1320,14 @@
                 The top prediction driver is ${formatFeatureName(primaryFactor.feature)} at ${primaryFactor.value.toFixed(2)}, 
                 actively ${directionText} with a SHAP contribution weight of ${primaryFactor.shap_contribution}.
             `;
+            
+            // Fade-in explanation text
+            gsap.from("#shap-explanation-summary-text", {
+                opacity: 0,
+                x: 10,
+                duration: 0.5,
+                ease: "power2.out"
+            });
         }
 
         // Human-friendly feature titles
