@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: factoryguard-ai
+    env: docker
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: GUNICORN_WORKERS
+        value: 2
+      - key: GUNICORN_THREADS
+        value: 2
+      - key: PYTHONUTF8
+        value: 1

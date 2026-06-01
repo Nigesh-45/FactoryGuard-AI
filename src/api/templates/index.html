@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="FactoryGuard AI - IoT Predictive Maintenance Dashboard for industrial robotic arms. Powered by XGBoost and SHAP explainability.">
+    <title>FactoryGuard AI — Predictive Maintenance Operator Console</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --bg-dark: #0b0f19;
+            --card-bg: rgba(22, 30, 49, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --primary: #4f46e5;
+            --primary-glow: rgba(79, 70, 229, 0.4);
+            --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.2);
+            --warning: #f59e0b;
+            --warning-glow: rgba(245, 158, 11, 0.2);
+            --danger: #ef4444;
+            --danger-glow: rgba(239, 68, 68, 0.2);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --font-outfit: 'Outfit', sans-serif;
+            --font-inter: 'Inter', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-inter);
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(at 10% 20%, rgba(79, 70, 229, 0.15) 0px, transparent 50%),
+                radial-gradient(at 90% 80%, rgba(239, 68, 68, 0.1) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(11, 15, 25, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Glassmorphism Common Styles */
+        .glass-panel {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        /* Header Styles */
+        header {
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 1rem 2rem 0.5rem 2rem;
+            height: 80px;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, #818cf8, #ef4444);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            letter-spacing: -1px;
+            font-family: var(--font-outfit);
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-title {
+            font-family: var(--font-outfit);
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            background: linear-gradient(to right, #f3f4f6, #9ca3af);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .status-badge-container {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--success);
+            box-shadow: 0 0 12px var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .latency-indicator {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        /* Main Workspace Layout */
+        main {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 1.5rem;
+            padding: 1rem 2rem 2rem 2rem;
+            flex-grow: 1;
+            max-height: calc(100vh - 120px);
+            overflow: hidden;
+        }
+
+        /* Left Panel - Machine List */
+        .fleet-panel {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .panel-title {
+            font-family: var(--font-outfit);
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .search-box {
+            position: relative;
+            width: 100%;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.6rem 1rem 0.6rem 2.2rem;
+            background: rgba(11, 15, 25, 0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 8px var(--primary-glow);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.8rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .machine-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .machine-card {
+            padding: 0.85rem 1rem;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .machine-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+            transform: translateX(2px);
+        }
+
+        .machine-card.active {
+            background: rgba(79, 70, 229, 0.15);
+            border-color: rgba(79, 70, 229, 0.4);
+            box-shadow: inset 0 0 10px rgba(79, 70, 229, 0.1);
+        }
+
+        .card-left {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .card-id {
+            font-family: var(--font-outfit);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .card-metrics {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .card-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.25rem;
+        }
+
+        .card-prob {
+            font-family: var(--font-outfit);
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .card-status {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+        }
+
+        .status-normal { color: var(--success); background: rgba(16, 185, 129, 0.1); }
+        .status-warning { color: var(--warning); background: rgba(245, 158, 11, 0.1); }
+        .status-critical { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+
+        /* Right Panel - Machine Inspector */
+        .inspector-panel {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .inspector-header {
+            padding: 1.25rem 2rem;
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .inspector-title-block {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .selected-machine-badge {
+            font-family: var(--font-outfit);
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: var(--text-main);
+        }
+
+        .selected-machine-state {
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .inspector-body {
+            padding: 1.5rem 2rem;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 1.5rem;
+        }
+
+        .inspector-left-col {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .inspector-right-col {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Card Section Styles */
+        .section-card {
+            background: rgba(11, 15, 25, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+
+        .section-title {
+            font-family: var(--font-outfit);
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Live Simulator Grid */
+        .simulator-inputs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .sim-control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            padding: 0.75rem;
+        }
+
+        .sim-label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .sim-val {
+            font-family: var(--font-outfit);
+            font-weight: 700;
+            color: var(--text-main);
+            font-size: 0.95rem;
+        }
+
+        .sim-slider {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+            accent-color: var(--primary);
+        }
+
+        .sim-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--text-main);
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+            transition: transform 0.1s ease;
+        }
+
+        .sim-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.3);
+        }
+
+        .sim-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            outline: none;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+
+        .btn-primary:hover {
+            background: #5a52e6;
+            transform: translateY(-1px);
+        }
+
+        .btn-success-outline {
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .btn-success-outline:hover {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-danger-outline {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .btn-danger-outline:hover {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+
+        /* Multi-Line Telemetry Chart */
+        .chart-container {
+            position: relative;
+            height: 250px;
+            width: 100%;
+        }
+
+        /* Risk Gauge Card (Right Column) */
+        .risk-gauge-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem 1.25rem;
+            position: relative;
+        }
+
+        .gauge-outer {
+            width: 160px;
+            height: 160px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .gauge-svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        .gauge-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.05);
+            stroke-width: 12;
+        }
+
+        .gauge-fill {
+            fill: none;
+            stroke: var(--success);
+            stroke-width: 12;
+            stroke-dasharray: 440;
+            stroke-dashoffset: 440;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.8s ease;
+        }
+
+        .gauge-center-text {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gauge-percentage {
+            font-family: var(--font-outfit);
+            font-size: 2.2rem;
+            font-weight: 800;
+            line-height: 1;
+            background: linear-gradient(135deg, #fff, #9ca3af);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gauge-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 0.2rem;
+        }
+
+        .gauge-alert-text {
+            font-family: var(--font-outfit);
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+        }
+
+        /* SHAP Explainability Risk Breakdown */
+        .shap-factors-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+
+        .shap-factor-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .shap-factor-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+        }
+
+        .shap-factor-name {
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        .shap-factor-value {
+            color: var(--text-muted);
+        }
+
+        .shap-bar-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .shap-bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.8s ease;
+            width: 0%;
+        }
+
+        .shap-bar.increase {
+            background: linear-gradient(to right, var(--primary), var(--danger));
+        }
+
+        .shap-bar.reduce {
+            background: linear-gradient(to right, var(--success), #34d399);
+        }
+
+        .shap-explanation-summary {
+            font-size: 0.8rem;
+            line-height: 1.4;
+            color: var(--text-muted);
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-left: 3px solid var(--primary);
+            border-radius: 0 6px 6px 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 1100px) {
+            main {
+                grid-template-columns: 1fr;
+                max-height: none;
+                overflow: visible;
+            }
+            .inspector-body {
+                grid-template-columns: 1fr;
+            }
+            header {
+                margin: 1rem;
+                height: auto;
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="glass-panel">
+        <div class="logo-section">
+            <div class="logo-icon">FG</div>
+            <div class="logo-text">
+                <span class="logo-title">FactoryGuard AI</span>
+                <span class="logo-subtitle">Predictive Maintenance Engine</span>
+            </div>
+        </div>
+        <div class="status-badge-container">
+            <div class="latency-indicator" id="latency-val">
+                <svg width="12" height="12" fill="currentColor" viewBox="0 0 16 16" style="margin-top:2px;">
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                    <path d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5z"/>
+                </svg>
+                Inference Latency: 0.00ms
+            </div>
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                Model: Tuned XGBoost
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Fleet Panel (Left Column) -->
+        <section class="fleet-panel glass-panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <span>Fleet Status</span>
+                    <span style="font-size:0.8rem; color:var(--text-muted);" id="machine-count">50 Arms Loaded</span>
+                </div>
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="search-input" class="search-input" placeholder="Search machine ID...">
+                </div>
+            </div>
+            <div class="machine-list" id="machine-list-container">
+                <!-- Machine Cards dynamically injected here -->
+                <div style="padding:2rem; text-align:center; color:var(--text-muted);">
+                    Loading fleet status...
+                </div>
+            </div>
+        </section>
+
+        <!-- Inspector Panel (Right Workspace) -->
+        <section class="inspector-panel glass-panel">
+            <div class="inspector-header">
+                <div class="inspector-title-block">
+                    <h1 class="selected-machine-badge" id="inspected-id">ARM-001</h1>
+                    <span class="selected-machine-state status-normal" id="inspected-state-badge">
+                        <span style="width:6px; height:6px; background:currentColor; border-radius:50%"></span>
+                        Normal Operation
+                    </span>
+                </div>
+                <div style="font-size:0.85rem; color:var(--text-muted);" id="last-prediction-time">
+                    Last evaluated: Just now
+                </div>
+            </div>
+
+            <div class="inspector-body">
+                <!-- Left Details Column (Simulator + Trend Charts) -->
+                <div class="inspector-left-col">
+                    
+                    <!-- Live Simulation Card -->
+                    <div class="section-card">
+                        <h2 class="section-title">
+                            Live Telemetry Simulator
+                            <span style="font-size:0.75rem; text-transform:none; font-weight:normal;">Slide to adjust sensor values</span>
+                        </h2>
+                        
+                        <div class="simulator-inputs">
+                            <!-- Vibration slider -->
+                            <div class="sim-control-group">
+                                <div class="sim-label">
+                                    <span>Vibration</span>
+                                    <span class="sim-val" id="val-vibration">10.0 mm/s</span>
+                                </div>
+                                <input type="range" id="slide-vibration" class="sim-slider" min="1" max="25" step="0.1" value="10">
+                            </div>
+                            
+                            <!-- Temperature slider -->
+                            <div class="sim-control-group">
+                                <div class="sim-label">
+                                    <span>Temperature</span>
+                                    <span class="sim-val" id="val-temperature">65.0 °C</span>
+                                </div>
+                                <input type="range" id="slide-temperature" class="sim-slider" min="30" max="110" step="0.5" value="65">
+                            </div>
+                            
+                            <!-- Pressure slider -->
+                            <div class="sim-control-group">
+                                <div class="sim-label">
+                                    <span>Pressure</span>
+                                    <span class="sim-val" id="val-pressure">0.40 Bar</span>
+                                </div>
+                                <input type="range" id="slide-pressure" class="sim-slider" min="0.05" max="0.8" step="0.01" value="0.4">
+                            </div>
+                        </div>
+
+                        <div class="sim-actions">
+                            <button class="btn btn-primary" id="btn-predict">
+                                🔌 Send Telemetry to Model
+                            </button>
+                            <button class="btn btn-success-outline" id="btn-sim-normal">
+                                🟢 Inject Normal State
+                            </button>
+                            <button class="btn btn-danger-outline" id="btn-sim-fail">
+                                🔴 Inject Failure Pattern
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sensor Trends Card -->
+                    <div class="section-card">
+                        <h2 class="section-title">Telemetry Sensor Trend Lines</h2>
+                        <div class="chart-container">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Explanations Column (Gauge + SHAP Factors) -->
+                <div class="inspector-right-col">
+                    
+                    <!-- Failure Probability Gauge Card -->
+                    <div class="section-card risk-gauge-card">
+                        <h2 class="section-title" style="align-self: flex-start; width: 100%;">Failure Probability Risk</h2>
+                        
+                        <div class="gauge-outer">
+                            <svg class="gauge-svg">
+                                <circle class="gauge-bg" cx="80" cy="80" r="70"></circle>
+                                <circle class="gauge-fill" id="gauge-fill-circle" cx="80" cy="80" r="70"></circle>
+                            </svg>
+                            <div class="gauge-center-text">
+                                <span class="gauge-percentage" id="gauge-percent-text">0.0%</span>
+                                <span class="gauge-label">Failure Probability</span>
+                            </div>
+                        </div>
+
+                        <div class="gauge-alert-text status-normal" id="gauge-alert-badge" style="padding:0.35rem 1rem; border-radius:6px;">
+                            🟢 NORMAL — No Action Required
+                        </div>
+                    </div>
+
+                    <!-- SHAP Explanations Risk Factors Card -->
+                    <div class="section-card">
+                        <h2 class="section-title">SHAP Predictive Risk Contributions</h2>
+                        
+                        <div class="shap-factors-list" id="shap-factors-container">
+                            <!-- Injected dynamically -->
+                            <div style="font-size:0.85rem; color:var(--text-muted); text-align:center; padding:1rem 0;">
+                                Select a machine or inject data to compute SHAP contributions.
+                            </div>
+                        </div>
+
+                        <div class="shap-explanation-summary" id="shap-explanation-summary-text">
+                            The system evaluates raw sensor data against a 32-reading temporal window cache to capture rolling volatility. Select a machine in the fleet panel to see historical diagnostics.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Global State variables
+        let selectedMachineId = 'ARM-001';
+        let fleetData = [];
+        let trendChartObj = null;
+        let recentHistory = [];
+
+        // DOM elements
+        const searchInput = document.getElementById('search-input');
+        const machineListContainer = document.getElementById('machine-list-container');
+        const inspectedId = document.getElementById('inspected-id');
+        const inspectedStateBadge = document.getElementById('inspected-state-badge');
+        const lastPredictionTime = document.getElementById('last-prediction-time');
+        
+        const slideVibration = document.getElementById('slide-vibration');
+        const slideTemperature = document.getElementById('slide-temperature');
+        const slidePressure = document.getElementById('slide-pressure');
+        const valVibration = document.getElementById('val-vibration');
+        const valTemperature = document.getElementById('val-temperature');
+        const valPressure = document.getElementById('val-pressure');
+        
+        const btnPredict = document.getElementById('btn-predict');
+        const btnSimNormal = document.getElementById('btn-sim-normal');
+        const btnSimFail = document.getElementById('btn-sim-fail');
+        
+        const gaugeFillCircle = document.getElementById('gauge-fill-circle');
+        const gaugePercentText = document.getElementById('gauge-percent-text');
+        const gaugeAlertBadge = document.getElementById('gauge-alert-badge');
+        const latencyVal = document.getElementById('latency-val');
+        
+        const shapFactorsContainer = document.getElementById('shap-factors-container');
+        const shapExplanationSummaryText = document.getElementById('shap-explanation-summary-text');
+
+        // Initial setup
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchFleet();
+            initChart();
+            
+            // Slider listeners
+            slideVibration.addEventListener('input', () => { valVibration.innerText = `${slideVibration.value} mm/s`; });
+            slideTemperature.addEventListener('input', () => { valTemperature.innerText = `${slideTemperature.value} °C`; });
+            slidePressure.addEventListener('input', () => { valPressure.innerText = `${parseFloat(slidePressure.value).toFixed(2)} Bar`; });
+            
+            // Actions listeners
+            btnPredict.addEventListener('click', postLivePrediction);
+            btnSimNormal.addEventListener('click', () => triggerSimulation('normal'));
+            btnSimFail.addEventListener('click', () => triggerSimulation('fail'));
+            
+            // Search filter
+            searchInput.addEventListener('input', filterFleet);
+            
+            // Periodic reload of fleet list to simulate live updates (every 8 seconds)
+            setInterval(fetchFleet, 8000);
+        });
+
+        // Fetch all machines
+        async function fetchFleet() {
+            try {
+                const res = await fetch('/api/machines');
+                const data = await res.json();
+                fleetData = data.machines;
+                renderFleetList();
+                
+                // Update fleet load counter
+                document.getElementById('machine-count').innerText = `${fleetData.length} Arms Loaded`;
+                
+                // Set initial inspector telemetry values from first machine if not loaded
+                if (recentHistory.length === 0) {
+                    selectMachine(selectedMachineId);
+                }
+            } catch (err) {
+                console.error("Error loading fleet:", err);
+            }
+        }
+
+        // Render fleet list in left panel
+        function renderFleetList() {
+            const query = searchInput.value.toLowerCase();
+            machineListContainer.innerHTML = '';
+            
+            const filtered = fleetData.filter(m => m.machine_id.toLowerCase().includes(query));
+            
+            if (filtered.length === 0) {
+                machineListContainer.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted);">No machines found.</div>`;
+                return;
+            }
+            
+            filtered.forEach(m => {
+                const isSelected = m.machine_id === selectedMachineId;
+                const statusClass = m.status === 'CRITICAL' ? 'status-critical' : m.status === 'WARNING' ? 'status-warning' : 'status-normal';
+                const statusCircleColor = m.status === 'CRITICAL' ? 'var(--danger)' : m.status === 'WARNING' ? 'var(--warning)' : 'var(--success)';
+                
+                const card = document.createElement('div');
+                card.className = `machine-card ${isSelected ? 'active' : ''}`;
+                card.onclick = () => selectMachine(m.machine_id);
+                
+                card.innerHTML = `
+                    <div class="card-left">
+                        <span class="card-id">${m.machine_id}</span>
+                        <span class="card-metrics">V: ${m.vibration} | T: ${m.temperature}°C | P: ${m.pressure}</span>
+                    </div>
+                    <div class="card-right">
+                        <span class="card-prob">${(m.failure_probability * 100).toFixed(1)}%</span>
+                        <span class="card-status ${statusClass}">${m.status}</span>
+                    </div>
+                `;
+                
+                machineListContainer.appendChild(card);
+            });
+        }
+
+        // Filter fleet list
+        function filterFleet() {
+            renderFleetList();
+        }
+
+        // Select machine from left list
+        async function selectMachine(mId) {
+            selectedMachineId = mId;
+            inspectedId.innerText = mId;
+            
+            // Highlight current in list
+            const cards = document.querySelectorAll('.machine-card');
+            cards.forEach(c => {
+                const id = c.querySelector('.card-id').innerText;
+                if (id === mId) c.classList.add('active');
+                else c.classList.remove('active');
+            });
+            
+            // Get machine history for chart
+            try {
+                const res = await fetch(`/api/machines/${mId}/history`);
+                const data = await res.json();
+                recentHistory = data.history;
+                
+                // Populate sliders with latest history reading
+                if (recentHistory && recentHistory.length > 0) {
+                    const lastReading = recentHistory[recentHistory.length - 1];
+                    updateSliders(lastReading.vibration, lastReading.temperature, lastReading.pressure);
+                }
+                
+                // Redraw chart
+                updateChart();
+                
+                // Trigger an initial prediction request to populate SHAP & Gauge for this machine
+                postLivePrediction();
+            } catch (err) {
+                console.error("Error loading machine details:", err);
+            }
+        }
+
+        // Populate sliders
+        function updateSliders(vib, temp, pres) {
+            slideVibration.value = vib;
+            slideTemperature.value = temp;
+            slidePressure.value = pres;
+            
+            valVibration.innerText = `${vib} mm/s`;
+            valTemperature.innerText = `${temp} °C`;
+            valPressure.innerText = `${pres.toFixed(2)} Bar`;
+        }
+
+        // Trigger simulation scenario
+        async function triggerSimulation(scenario) {
+            try {
+                const res = await fetch(`/api/machines/${selectedMachineId}/simulate?scenario=${scenario}`);
+                const reading = await res.json();
+                updateSliders(reading.vibration, reading.temperature, reading.pressure);
+                
+                // Automatically run evaluation
+                postLivePrediction();
+            } catch (err) {
+                console.error("Simulation error:", err);
+            }
+        }
+
+        // Post slider telemetry readings to `/predict`
+        async function postLivePrediction() {
+            const rawVib = parseFloat(slideVibration.value);
+            const rawTemp = parseFloat(slideTemperature.value);
+            const rawPres = parseFloat(slidePressure.value);
+            
+            const payload = {
+                "machine_id": selectedMachineId,
+                "vibration": rawVib,
+                "temperature": rawTemp,
+                "pressure": rawPres
+            };
+            
+            try {
+                const startCall = performance.now();
+                const res = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const response = await res.json();
+                
+                const timeDiff = performance.now() - startCall;
+                
+                // Update header latency
+                latencyVal.innerHTML = `
+                    <svg width="12" height="12" fill="currentColor" viewBox="0 0 16 16" style="margin-top:2px;">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5z"/>
+                    </svg>
+                    Inference Latency: ${response.latency_ms}ms
+                `;
+                
+                // Update Inspector Header State
+                const prob = response.failure_probability;
+                let statusClass = 'status-normal';
+                let stateText = 'Normal Operation';
+                let alertColor = 'var(--success)';
+                let alertBg = 'rgba(16, 185, 129, 0.1)';
+                
+                if (prob >= 0.7) {
+                    statusClass = 'status-critical';
+                    stateText = '🔴 CRITICAL RISK';
+                    alertColor = 'var(--danger)';
+                    alertBg = 'rgba(239, 68, 68, 0.15)';
+                } else if (prob >= 0.4) {
+                    statusClass = 'status-warning';
+                    stateText = '🟡 WARNING RISK';
+                    alertColor = 'var(--warning)';
+                    alertBg = 'rgba(245, 158, 11, 0.15)';
+                }
+                
+                inspectedStateBadge.className = `selected-machine-state ${statusClass}`;
+                inspectedStateBadge.innerHTML = `
+                    <span style="width:6px; height:6px; background:currentColor; border-radius:50%"></span>
+                    ${stateText}
+                `;
+                
+                lastPredictionTime.innerText = `Last evaluated: Just now`;
+                
+                // Update circular progress gauge
+                updateGauge(prob, response.alert_level);
+                
+                // Update SHAP visualizer
+                updateSHAPFactors(response.top_risk_factors, response.failure_probability_pct);
+                
+                // Append this simulated step to recentHistory locally to dynamically grow our trend charts
+                if (recentHistory.length > 0) {
+                    // Check if last item is same to avoid duplicates or replace
+                    const lastHist = recentHistory[recentHistory.length - 1];
+                    recentHistory.push({
+                        index: lastHist.index + 1,
+                        vibration: rawVib,
+                        temperature: rawTemp,
+                        pressure: rawPres
+                    });
+                    if (recentHistory.length > 30) {
+                        recentHistory.shift();
+                    }
+                    updateChart();
+                }
+                
+            } catch (err) {
+                console.error("Prediction error:", err);
+            }
+        }
+
+        // Circular Progress Gauge Update
+        function updateGauge(probability, alertLevel) {
+            const pct = probability * 100;
+            gaugePercentText.innerText = `${pct.toFixed(1)}%`;
+            
+            // Adjust SVG circumference (2 * pi * r = 2 * 3.14 * 70 = 439.6)
+            const circumference = 440;
+            const offset = circumference - (probability * circumference);
+            gaugeFillCircle.style.strokeDashoffset = offset;
+            
+            // Change color gradient
+            if (probability >= 0.7) {
+                gaugeFillCircle.style.stroke = 'var(--danger)';
+                gaugeAlertBadge.className = 'gauge-alert-text status-critical';
+                gaugeAlertBadge.innerText = '🔴 CRITICAL — Maintain Immediately';
+            } else if (probability >= 0.4) {
+                gaugeFillCircle.style.stroke = 'var(--warning)';
+                gaugeAlertBadge.className = 'gauge-alert-text status-warning';
+                gaugeAlertBadge.innerText = '🟡 WARNING — Monitor Closely';
+            } else {
+                gaugeFillCircle.style.stroke = 'var(--success)';
+                gaugeAlertBadge.className = 'gauge-alert-text status-normal';
+                gaugeAlertBadge.innerText = '🟢 NORMAL — Operational';
+            }
+        }
+
+        // Render SHAP risk contribution horizontal bar charts
+        function updateSHAPFactors(factors, pctText) {
+            shapFactorsContainer.innerHTML = '';
+            
+            if (!factors || factors.length === 0) {
+                shapFactorsContainer.innerHTML = `<div style="font-size:0.85rem; color:var(--text-muted); text-align:center; padding:1rem 0;">No risk factors recorded.</div>`;
+                return;
+            }
+            
+            // Rank factors by absolute contribution
+            factors.forEach(f => {
+                const barClass = f.shap_contribution > 0 ? 'increase' : 'reduce';
+                // Scale value. Since SHAP values range roughly from -10 to +10, absolute percentage works best
+                let percentage = Math.min(100, Math.abs(f.shap_contribution) * 15);
+                if (percentage < 5) percentage = 8; // min visible bar
+                
+                const sign = f.shap_contribution > 0 ? '+' : '';
+                const displayContribution = `${sign}${f.shap_contribution}`;
+                
+                const row = document.createElement('div');
+                row.className = 'shap-factor-row';
+                row.innerHTML = `
+                    <div class="shap-factor-meta">
+                        <span class="shap-factor-name">${formatFeatureName(f.feature)}</span>
+                        <span class="shap-factor-value">${f.value.toFixed(2)} (${displayContribution})</span>
+                    </div>
+                    <div class="shap-bar-container">
+                        <div class="shap-bar ${barClass}" style="width: ${percentage}%"></div>
+                    </div>
+                `;
+                shapFactorsContainer.appendChild(row);
+            });
+            
+            // Generate floor description
+            const primaryFactor = factors[0];
+            const directionText = primaryFactor.shap_contribution > 0 ? 'increasing risk' : 'reducing risk';
+            shapExplanationSummaryText.innerText = `
+                The machine has a ${pctText} failure probability. 
+                The top prediction driver is ${formatFeatureName(primaryFactor.feature)} at ${primaryFactor.value.toFixed(2)}, 
+                actively ${directionText} with a SHAP contribution weight of ${primaryFactor.shap_contribution}.
+            `;
+        }
+
+        // Human-friendly feature titles
+        function formatFeatureName(name) {
+            return name
+                .replace('_roll_mean_4', ' 1hr Rolling Mean')
+                .replace('_roll_mean_16', ' 4hr Rolling Mean')
+                .replace('_roll_mean_32', ' 8hr Rolling Mean')
+                .replace('_roll_std_4', ' 1hr Volatility')
+                .replace('_roll_std_16', ' 4hr Volatility')
+                .replace('_roll_std_32', ' 8hr Volatility')
+                .replace('_ema_4', ' 1hr EMA')
+                .replace('_ema_16', ' 4hr EMA')
+                .replace('_ema_32', ' 8hr EMA')
+                .replace('_lag_1', ' (Previous Reading)')
+                .replace('_lag_2', ' (2 Readings Ago)')
+                .toUpperCase();
+        }
+
+        // Initialize Trend lines
+        function initChart() {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            
+            trendChartObj = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Vibration (mm/s)',
+                            data: [],
+                            borderColor: '#818cf8',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.3,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Temperature (°C)',
+                            data: [],
+                            borderColor: '#f59e0b',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.3,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Pressure (Bar)',
+                            data: [],
+                            borderColor: '#10b981',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.3,
+                            yAxisID: 'y2'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 9 } }
+                        },
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 9 } }
+                        },
+                        y2: {
+                            type: 'linear',
+                            position: 'right',
+                            grid: { drawOnChartArea: false },
+                            ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 9 } }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#9ca3af', boxWidth: 10, font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Redraw telemetry chart with recent logs
+        function updateChart() {
+            if (!trendChartObj || recentHistory.length === 0) return;
+            
+            const indices = recentHistory.map(h => `t-${recentHistory.length - 1 - h.index}`);
+            const vibData = recentHistory.map(h => h.vibration);
+            const tempData = recentHistory.map(h => h.temperature);
+            const presData = recentHistory.map(h => h.pressure);
+            
+            trendChartObj.data.labels = indices;
+            trendChartObj.data.datasets[0].data = vibData;
+            trendChartObj.data.datasets[1].data = tempData;
+            trendChartObj.data.datasets[2].data = presData;
+            
+            trendChartObj.update('none'); // silent draw
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ── Virtual Environments ──────────────────────────────────────────────────────
+venv/
+env/
+.venv/
+.env/
+
+# ── IDE / Editor ──────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── Generated Data (reproducible via generate_data.py + pipeline) ─────────────
+data/raw/*.csv
+!data/raw/sensor_readings.csv
+data/processed/*.parquet
+
+# ── Model Artifacts (reproducible via train.py) ───────────────────────────────
+models/*.joblib
+!models/factoryguard_xgb.joblib
+models/*.parquet
+
+# ── Reports (reproducible via shap_explainer.py) ──────────────────────────────
+reports/shap_plots/*.png
+
+# ── Jupyter Notebooks (optional checkpoints) ─────────────────────────────────
+.ipynb_checkpoints/
