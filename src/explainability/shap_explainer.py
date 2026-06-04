@@ -6,9 +6,9 @@ WHY the model flags a specific machine for failure.
 
 Example output:
   "Machine #47 flagged: HIGH RISK
-   → Temp_roll_mean_16 = 87.3°C  (+0.42 risk contribution)
-   → Pressure_lag_1 = 0.31        (+0.38 risk contribution)
-   → Vibration_ema_32 = 12.1      (+0.21 risk contribution)"
+   -> Temp_roll_mean_16 = 87.3°C  (+0.42 risk contribution)
+   -> Pressure_lag_1 = 0.31        (+0.38 risk contribution)
+   -> Vibration_ema_32 = 12.1      (+0.21 risk contribution)"
 
 This builds trust with on-floor engineering teams.
 """
@@ -31,8 +31,8 @@ class SHAPExplainer:
     Wraps SHAP TreeExplainer for XGBoost model.
     
     Two explanation modes:
-    1. Global  → Summary plot: which features matter most overall?
-    2. Local   → Force plot: why was THIS specific machine flagged?
+    1. Global  -> Summary plot: which features matter most overall?
+    2. Local   -> Force plot: why was THIS specific machine flagged?
     """
 
     def __init__(self, model_path: str):
@@ -74,7 +74,7 @@ class SHAPExplainer:
         if save:
             path = PLOTS_DIR / "global_summary.png"
             plt.savefig(path, dpi=150, bbox_inches="tight")
-            print(f"[SHAP] Summary plot saved → {path}")
+            print(f"[SHAP] Summary plot saved -> {path}")
         plt.show()
 
     def local_force_plot(self, X: pd.DataFrame, sample_idx: int, save: bool = True):
@@ -99,7 +99,7 @@ class SHAPExplainer:
         if save:
             path = PLOTS_DIR / f"force_plot_sample_{sample_idx}.png"
             plt.savefig(path, dpi=150, bbox_inches="tight")
-            print(f"[SHAP] Force plot saved → {path}")
+            print(f"[SHAP] Force plot saved -> {path}")
         plt.show()
 
     def explain_prediction(self, X_single: pd.DataFrame) -> dict:
@@ -124,7 +124,7 @@ class SHAPExplainer:
                 "feature": name,
                 "value": float(X_single[name].iloc[0]),
                 "shap_contribution": round(float(contrib), 4),
-                "direction": "↑ Increases Risk" if contrib > 0 else "↓ Reduces Risk"
+                "direction": "+ Increases Risk" if contrib > 0 else "- Reduces Risk"
             }
             for name, contrib in contributions[:3]
         ]
@@ -152,12 +152,17 @@ def run_week3_analysis():
     explainer.local_force_plot(X_sample, sample_idx=0)
 
     # Human-readable explanation example
-    explanation = explainer.explain_prediction(X_test.iloc[[0]])
+    explanation = explain_prediction_wrapper(explainer, X_test.iloc[[0]])
     print("\n[SHAP] Human-readable explanation:")
     print(f"  Failure Probability: {explanation['failure_probability']:.2%}")
     for factor in explanation["top_risk_factors"]:
         print(f"  • {factor['feature']}: {factor['value']:.3f} "
-              f"→ {factor['direction']} (SHAP: {factor['shap_contribution']})")
+              f"-> {factor['direction']} (SHAP: {factor['shap_contribution']})")
+
+
+def explain_prediction_wrapper(explainer_obj, X_single):
+    # Helper wrapper to avoid naming conflicts with local print variables
+    return explainer_obj.explain_prediction(X_single)
 
 
 if __name__ == "__main__":

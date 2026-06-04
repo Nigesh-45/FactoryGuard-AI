@@ -64,21 +64,37 @@ init_history_cache()
 
 
 # ── Feature Engineering helper ───────────────────────────────────────────────
-def compute_features_from_history(machine_id: str, vibration: float, temperature: float, pressure: float) -> pd.DataFrame:
+def compute_features_from_history(machine_id: str, vibration: float, temperature: float, pressure: float, append_history: bool = True) -> pd.DataFrame:
     """
-    Computes all 36 required engineered features dynamically
+    Computes all required engineered features dynamically
     using the historical cache to prevent prediction mismatch.
     """
-    # 1. Add current reading to history
-    MACHINE_HISTORY[machine_id].append({
-        "vibration": vibration,
-        "temperature": temperature,
-        "pressure": pressure
-    })
+    if append_history:
+        # 1. Add current reading to history
+        MACHINE_HISTORY[machine_id].append({
+            "vibration": vibration,
+            "temperature": temperature,
+            "pressure": pressure
+        })
     
     # 2. Convert history to DataFrame
     history = list(MACHINE_HISTORY[machine_id])
-    # Pad history if it's too short (needs at least 33 rows for 32-period lookback)
+    if not append_history:
+        # If not appending, copy history and temporarily add the current reading for calculation
+        history = history.copy()
+        if not history:
+            history.append({
+                "vibration": vibration,
+                "temperature": temperature,
+                "pressure": pressure
+            })
+        else:
+            history.append({
+                "vibration": vibration,
+                "temperature": temperature,
+                "pressure": pressure
+            })
+        
     while len(history) < 33:
         history.insert(0, history[0])
         
@@ -114,6 +130,10 @@ def compute_features_from_history(machine_id: str, vibration: float, temperature
         features[f"{col}_lag_1"] = float(df_hist[col].iloc[-2])
         features[f"{col}_lag_2"] = float(df_hist[col].iloc[-3])
         
+    # Add physics-based interaction features
+    features["thermal_stress_index"] = temperature * vibration
+    features["pressure_vibration_ratio"] = pressure / (vibration + 1e-5)
+    
     # Standard column ordering expected by scikit-learn / XGBoost model
     cols_order = [
         'vibration', 'temperature', 'pressure',
@@ -128,7 +148,8 @@ def compute_features_from_history(machine_id: str, vibration: float, temperature
         'pressure_roll_mean_4', 'pressure_roll_std_4', 'pressure_ema_4',
         'pressure_roll_mean_16', 'pressure_roll_std_16', 'pressure_ema_16',
         'pressure_roll_mean_32', 'pressure_roll_std_32', 'pressure_ema_32',
-        'pressure_lag_1', 'pressure_lag_2'
+        'pressure_lag_1', 'pressure_lag_2',
+        'thermal_stress_index', 'pressure_vibration_ratio'
     ]
     
     return pd.DataFrame([features])[cols_order]
@@ -150,10 +171,11 @@ def validate_input(data: dict) -> tuple[bool, str]:
         'pressure_roll_mean_4', 'pressure_roll_std_4', 'pressure_ema_4',
         'pressure_roll_mean_16', 'pressure_roll_std_16', 'pressure_ema_16',
         'pressure_roll_mean_32', 'pressure_roll_std_32', 'pressure_ema_32',
-        'pressure_lag_1', 'pressure_lag_2'
+        'pressure_lag_1', 'pressure_lag_2',
+        'thermal_stress_index', 'pressure_vibration_ratio'
     ]
     
-    # Check if all 36 features are passed directly
+    # Check if all features are passed directly
     if all(f in data for f in required_all):
         return True, "all"
         
@@ -214,7 +236,8 @@ def predict():
             'pressure_roll_mean_4', 'pressure_roll_std_4', 'pressure_ema_4',
             'pressure_roll_mean_16', 'pressure_roll_std_16', 'pressure_ema_16',
             'pressure_roll_mean_32', 'pressure_roll_std_32', 'pressure_ema_32',
-            'pressure_lag_1', 'pressure_lag_2'
+            'pressure_lag_1', 'pressure_lag_2',
+            'thermal_stress_index', 'pressure_vibration_ratio'
         ]
         X_input = pd.DataFrame([data])[cols_order]
 
@@ -222,9 +245,13 @@ def predict():
     explanation = explainer.explain_prediction(X_input)
     failure_prob = explanation["failure_probability"]
 
-    if failure_prob >= 0.7:
+    # Retrieve optimal thresholds from saved model pipeline
+    crit_thresh = getattr(explainer.pipeline, "critical_threshold", 0.7)
+    warn_thresh = getattr(explainer.pipeline, "warning_threshold", 0.4)
+
+    if failure_prob >= crit_thresh:
         alert = "🔴 CRITICAL — Schedule maintenance immediately"
-    elif failure_prob >= 0.4:
+    elif failure_prob >= warn_thresh:
         alert = "🟡 WARNING — Monitor closely"
     else:
         alert = "🟢 NORMAL — No action required"
@@ -281,7 +308,8 @@ def batch_predict():
                 'pressure_roll_mean_4', 'pressure_roll_std_4', 'pressure_ema_4',
                 'pressure_roll_mean_16', 'pressure_roll_std_16', 'pressure_ema_16',
                 'pressure_roll_mean_32', 'pressure_roll_std_32', 'pressure_ema_32',
-                'pressure_lag_1', 'pressure_lag_2'
+                'pressure_lag_1', 'pressure_lag_2',
+                'thermal_stress_index', 'pressure_vibration_ratio'
             ]
             X_input = pd.DataFrame([machine_data])[cols_order]
             
@@ -300,55 +328,30 @@ def batch_predict():
 def get_machines():
     """List all cached machines, their current telemetry, and computed risk levels."""
     machines_summary = []
+    
+    crit_thresh = getattr(explainer.pipeline, "critical_threshold", 0.7)
+    warn_thresh = getattr(explainer.pipeline, "warning_threshold", 0.4)
+    
     for m_id, readings in MACHINE_HISTORY.items():
         if not readings:
             continue
         last = readings[-1]
         
-        # Calculate feature vector for the last reading without altering history
         try:
-            history = list(readings)
-            while len(history) < 33:
-                history.insert(0, history[0])
-            df_hist = pd.DataFrame(history)
-            
-            features = {}
-            features["vibration"] = last["vibration"]
-            features["temperature"] = last["temperature"]
-            features["pressure"] = last["pressure"]
-            
-            SENSOR_COLS = ["vibration", "temperature", "pressure"]
-            WINDOWS = [4, 16, 32]
-            for col in SENSOR_COLS:
-                for w in WINDOWS:
-                    series = df_hist[col].iloc[:-1]
-                    features[f"{col}_roll_mean_{w}"] = float(series.tail(w).mean())
-                    features[f"{col}_roll_std_{w}"] = float(series.tail(w).std()) if len(series) >= 2 else 0.0
-                    if pd.isna(features[f"{col}_roll_std_{w}"]):
-                        features[f"{col}_roll_std_{w}"] = 0.0
-                    features[f"{col}_ema_{w}"] = float(series.ewm(span=w, adjust=False).mean().iloc[-1])
-                features[f"{col}_lag_1"] = float(df_hist[col].iloc[-2])
-                features[f"{col}_lag_2"] = float(df_hist[col].iloc[-3])
-                
-            cols_order = [
-                'vibration', 'temperature', 'pressure',
-                'vibration_roll_mean_4', 'vibration_roll_std_4', 'vibration_ema_4',
-                'vibration_roll_mean_16', 'vibration_roll_std_16', 'vibration_ema_16',
-                'vibration_roll_mean_32', 'vibration_roll_std_32', 'vibration_ema_32',
-                'vibration_lag_1', 'vibration_lag_2',
-                'temperature_roll_mean_4', 'temperature_roll_std_4', 'temperature_ema_4',
-                'temperature_roll_mean_16', 'temperature_roll_std_16', 'temperature_ema_16',
-                'temperature_roll_mean_32', 'temperature_roll_std_32', 'temperature_ema_32',
-                'temperature_lag_1', 'temperature_lag_2',
-                'pressure_roll_mean_4', 'pressure_roll_std_4', 'pressure_ema_4',
-                'pressure_roll_mean_16', 'pressure_roll_std_16', 'pressure_ema_16',
-                'pressure_roll_mean_32', 'pressure_roll_std_32', 'pressure_ema_32',
-                'pressure_lag_1', 'pressure_lag_2'
-            ]
-            X_input = pd.DataFrame([features])[cols_order]
+            # Reuses the helper method without modifying the cache history
+            X_input = compute_features_from_history(
+                m_id, 
+                last["vibration"], 
+                last["temperature"], 
+                last["pressure"], 
+                append_history=False
+            )
             prob = float(explainer.pipeline.predict_proba(X_input)[:, 1][0])
-        except Exception:
+        except Exception as e:
+            print(f"[API] Prediction calculation error for {m_id}: {e}")
             prob = 0.0
+            
+        status = "CRITICAL" if prob >= crit_thresh else "WARNING" if prob >= warn_thresh else "NORMAL"
             
         machines_summary.append({
             "machine_id": m_id,
@@ -356,7 +359,7 @@ def get_machines():
             "temperature": round(last["temperature"], 2),
             "pressure": round(last["pressure"], 4),
             "failure_probability": round(prob, 4),
-            "status": "CRITICAL" if prob >= 0.7 else "WARNING" if prob >= 0.4 else "NORMAL"
+            "status": status
         })
         
     machines_summary.sort(key=lambda x: x["machine_id"])

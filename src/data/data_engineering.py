@@ -105,6 +105,10 @@ class TemporalFeatureEngineer:
             df[f"{col}_lag_1"] = df[col].shift(1)
             df[f"{col}_lag_2"] = df[col].shift(2)
 
+        # Add physics-based interaction features
+        df["thermal_stress_index"] = df["temperature"] * df["vibration"]
+        df["pressure_vibration_ratio"] = df["pressure"] / (df["vibration"] + 1e-5)
+
         # Drop rows with NaN introduced by lagging
         df.dropna(inplace=True)
         df.reset_index(inplace=True)
@@ -115,7 +119,7 @@ class TemporalFeatureEngineer:
 
 def run_week1_pipeline(raw_path: str, output_path: str) -> pd.DataFrame:
     """
-    Full Week 1 pipeline: Load → Clean → Feature Engineer → Save.
+    Full Week 1 pipeline: Load -> Clean -> Feature Engineer -> Save.
     Run this script directly to produce the modeling dataset.
     """
     loader = SensorDataLoader(raw_path)
@@ -128,7 +132,7 @@ def run_week1_pipeline(raw_path: str, output_path: str) -> pd.DataFrame:
 
     output_file = Path(output_path) / "modeling_dataset.parquet"
     df_features.to_parquet(output_file, index=False)
-    print(f"[Pipeline] Saved modeling dataset → {output_file}")
+    print(f"[Pipeline] Saved modeling dataset -> {output_file}")
     return df_features
 
 
@@ -137,3 +141,4 @@ if __name__ == "__main__":
         raw_path="data/raw",
         output_path="data/processed"
     )
+

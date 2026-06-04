@@ -1241,6 +1241,196 @@
                 width: 100%;
             }
         }
+        
+        /* ── SVG Robotic Arm Visualizer styles ── */
+        .arm-svg-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 240px;
+            overflow: hidden;
+            position: relative;
+            background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.08), rgba(16, 24, 48, 0.45)) !important;
+        }
+
+        .arm-svg-container {
+            width: 100%;
+            max-width: 320px;
+            height: 190px;
+            position: relative;
+        }
+
+        #robotic-arm-svg {
+            width: 100%;
+            height: 100%;
+            transition: all 0.3s ease;
+        }
+
+        @keyframes shake-arm {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            20% { transform: translate(calc(var(--shake-amt) * -0.8px), calc(var(--shake-amt) * 0.8px)) rotate(calc(var(--shake-amt) * -0.05deg)); }
+            40% { transform: translate(calc(var(--shake-amt) * 0.8px), calc(var(--shake-amt) * -0.8px)) rotate(calc(var(--shake-amt) * 0.05deg)); }
+            60% { transform: translate(calc(var(--shake-amt) * -0.8px), calc(var(--shake-amt) * -0.8px)) rotate(calc(var(--shake-amt) * -0.05deg)); }
+            80% { transform: translate(calc(var(--shake-amt) * 0.8px), calc(var(--shake-amt) * 0.8px)) rotate(calc(var(--shake-amt) * 0.05deg)); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        .shaking-arm #arm-group {
+            animation: shake-arm 0.08s infinite linear;
+        }
+
+        @keyframes flow-hose {
+            to { stroke-dashoffset: -20; }
+        }
+
+        .flowing-hose {
+            animation: flow-hose var(--hose-speed, 1s) infinite linear;
+        }
+
+        @keyframes pulse-danger-hose {
+            0% { stroke: var(--danger); stroke-width: 2.5px; opacity: 0.6; }
+            100% { stroke: #ef4444; stroke-width: 3.5px; opacity: 1; }
+        }
+
+        .pulsing-hose {
+            animation: pulse-danger-hose 0.5s infinite alternate ease-in-out;
+        }
+
+        @keyframes pulse-heat {
+            0% { fill: rgba(244, 63, 94, 0.1); r: 12px; }
+            100% { fill: rgba(244, 63, 94, 0.45); r: 24px; }
+        }
+
+        .pulsing-heat {
+            animation: pulse-heat 0.8s infinite alternate ease-in-out;
+        }
+
+        /* ── Dynamic Glowing Card Effects ── */
+        .arm-card {
+            border: 1px solid var(--card-border);
+            position: relative;
+        }
+
+        .arm-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .arm-card.selected-card {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.25) !important;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), var(--card-bg)) !important;
+        }
+
+        .arm-card.critical-card {
+            animation: border-glow-critical 2s infinite alternate ease-in-out;
+        }
+
+        .arm-card.warning-card {
+            animation: border-glow-warning 2.5s infinite alternate ease-in-out;
+        }
+
+        @keyframes border-glow-critical {
+            0% { border-color: rgba(244, 63, 94, 0.15); box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25); }
+            100% { border-color: rgba(244, 63, 94, 0.45); box-shadow: 0 6px 20px rgba(244, 63, 94, 0.12); }
+        }
+
+        @keyframes border-glow-warning {
+            0% { border-color: rgba(245, 158, 11, 0.15); box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25); }
+            100% { border-color: rgba(245, 158, 11, 0.4); box-shadow: 0 6px 20px rgba(245, 158, 11, 0.08); }
+        }
+
+        /* ── Tornado SHAP Chart ── */
+        .shap-progress-container {
+            display: flex;
+            position: relative;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 6px;
+            overflow: hidden;
+            align-items: center;
+        }
+
+        .shap-progress-left {
+            position: absolute;
+            right: 50%;
+            top: 0;
+            bottom: 0;
+            background: linear-gradient(to left, var(--success), #34d399);
+            border-radius: 6px 0 0 6px;
+            transform-origin: right;
+            transition: width 0.4s ease;
+        }
+
+        .shap-progress-right {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            background: linear-gradient(to right, var(--primary), var(--danger));
+            border-radius: 0 6px 6px 0;
+            transform-origin: left;
+            transition: width 0.4s ease;
+        }
+
+        .shap-factor-row-item {
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            transition: all 0.25s ease;
+            cursor: pointer;
+        }
+
+        .shap-factor-row-item:hover {
+            background: rgba(255, 255, 255, 0.02);
+            border-color: rgba(255, 255, 255, 0.05);
+            transform: translateX(4px);
+        }
+
+        /* ── Checklist Actions ── */
+        .checklist-panel {
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .checklist-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            padding: 0.35rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.02);
+        }
+
+        .checklist-item.done {
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
+
+        .checklist-checkbox {
+            margin-top: 0.15rem;
+            width: 14px;
+            height: 14px;
+            accent-color: var(--primary-light);
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -1401,6 +1591,66 @@
                 <!-- Left Column (Hardware & Telemetry Sliders) -->
                 <div class="diagnostics-main-col">
                     
+                    <!-- Robotic Arm SVG Visualizer -->
+                    <div class="glass-panel section-card arm-svg-card">
+                        <h3 class="section-heading" style="width: 100%;">
+                            <span>Robotic Arm State Visualizer</span>
+                            <span style="font-size: 0.72rem; text-transform: none; color: var(--text-muted);" id="arm-visual-state">Active Feed</span>
+                        </h3>
+                        <div class="arm-svg-container">
+                            <svg id="robotic-arm-svg" viewBox="0 0 200 150">
+                                <defs>
+                                    <linearGradient id="arm-metal" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#818cf8" />
+                                        <stop offset="100%" stop-color="#6366f1" />
+                                    </linearGradient>
+                                    <linearGradient id="arm-metal-warn" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#fbbf24" />
+                                        <stop offset="100%" stop-color="#d97706" />
+                                    </linearGradient>
+                                    <linearGradient id="arm-metal-danger" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#f87171" />
+                                        <stop offset="100%" stop-color="#dc2626" />
+                                    </linearGradient>
+                                    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                                        <feGaussianBlur stdDeviation="3" result="blur" />
+                                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                                    </filter>
+                                </defs>
+                                
+                                <!-- Base platform -->
+                                <path d="M 20,135 L 180,135 L 160,145 L 40,145 Z" fill="rgba(255, 255, 255, 0.03)" stroke="rgba(255, 255, 255, 0.12)" stroke-width="1.5" />
+                                <rect x="85" y="115" width="30" height="20" rx="3" fill="#0b0f19" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+                                
+                                <!-- Hydraulic Hose (Pressure Line) -->
+                                <path id="hydraulic-hose" d="M 100,125 Q 70,85 100,55" fill="none" stroke="rgba(16, 185, 129, 0.5)" stroke-width="2.5" stroke-dasharray="4, 4" class="flowing-hose" />
+                                
+                                <g id="arm-group">
+                                    <!-- Link 1 -->
+                                    <line x1="100" y1="125" x2="100" y2="75" stroke="url(#arm-metal)" stroke-width="8" stroke-linecap="round" id="link-1" />
+                                    
+                                    <!-- Base Joint -->
+                                    <circle cx="100" cy="125" r="10" fill="#0b0f19" stroke="#6366f1" stroke-width="3" id="joint-base" />
+                                    
+                                    <!-- Link 2 -->
+                                    <line x1="100" y1="75" x2="140" y2="45" stroke="url(#arm-metal)" stroke-width="6" stroke-linecap="round" id="link-2" />
+                                    
+                                    <!-- Elbow Joint -->
+                                    <circle cx="100" cy="75" r="8" fill="#0b0f19" stroke="#6366f1" stroke-width="2.5" id="joint-elbow" />
+                                    
+                                    <!-- Wrist Joint -->
+                                    <circle cx="140" cy="45" r="6" fill="#0b0f19" stroke="#6366f1" stroke-width="2" id="joint-wrist" />
+                                    
+                                    <!-- Gripper Tool Head -->
+                                    <path d="M 140,45 L 148,37 M 140,45 L 148,53 M 148,35 L 154,39 M 148,55 L 154,51" stroke="#6366f1" stroke-width="2" stroke-linecap="round" fill="none" id="gripper" />
+                                    
+                                    <!-- Heat hotspots -->
+                                    <circle cx="100" cy="75" r="18" fill="rgba(244, 63, 94, 0)" id="heat-glow" filter="url(#glow)" />
+                                </g>
+                            </svg>
+                        </div>
+                    </div>
+                    
                     <!-- Dials Panel -->
                     <div class="glass-panel section-card">
                         <h3 class="section-heading">Active Telemetry Readouts</h3>
@@ -1536,6 +1786,14 @@
                         
                         <div class="shap-summary-box" id="diagnostics-shap-explanation-summary">
                             Evaluating temporal sensor variance against cache history...
+                        </div>
+                    </div>
+
+                    <!-- Recommended Safety Protocol -->
+                    <div class="glass-panel section-card checklist-panel" id="diagnostics-checklist-card">
+                        <h3 class="checklist-title">Recommended Safety Protocol</h3>
+                        <div id="checklist-items-container">
+                            <!-- Populated dynamically -->
                         </div>
                     </div>
                 </div>
@@ -1987,6 +2245,84 @@
                 stagger: 0.05,
                 ease: "power2.out"
             });
+
+            // ── SVG Robotic Arm Animations ──
+            const svgArm = document.getElementById('robotic-arm-svg');
+            const link1 = document.getElementById('link-1');
+            const link2 = document.getElementById('link-2');
+            const jBase = document.getElementById('joint-base');
+            const jElbow = document.getElementById('joint-elbow');
+            const jWrist = document.getElementById('joint-wrist');
+            const gripper = document.getElementById('gripper');
+            const heatGlow = document.getElementById('heat-glow');
+            const hose = document.getElementById('hydraulic-hose');
+            const vState = document.getElementById('arm-visual-state');
+
+            if (svgArm) {
+                // 1. Shaking for vibration
+                if (vib >= 18) {
+                    const shakeAmt = Math.min(8, (vib - 18) * 0.5 + 4);
+                    svgArm.style.setProperty('--shake-amt', shakeAmt);
+                    svgArm.classList.add('shaking-arm');
+                    vState.innerText = "⚠️ High Vibration Flutter";
+                    vState.style.color = "var(--danger)";
+                } else if (vib >= 14) {
+                    const shakeAmt = (vib - 14) * 0.4 + 1.5;
+                    svgArm.style.setProperty('--shake-amt', shakeAmt);
+                    svgArm.classList.add('shaking-arm');
+                    vState.innerText = "⚡ Joint Friction Wobble";
+                    vState.style.color = "var(--warning)";
+                } else {
+                    svgArm.classList.remove('shaking-arm');
+                    vState.innerText = "Active Feed";
+                    vState.style.color = "var(--text-muted)";
+                }
+
+                // 2. Heat glow for temperature
+                if (temp >= 90) {
+                    link1.setAttribute('stroke', 'url(#arm-metal-danger)');
+                    link2.setAttribute('stroke', 'url(#arm-metal-danger)');
+                    jBase.style.stroke = 'var(--danger)';
+                    jElbow.style.stroke = 'var(--danger)';
+                    jWrist.style.stroke = 'var(--danger)';
+                    gripper.style.stroke = 'var(--danger)';
+                    heatGlow.className = 'pulsing-heat';
+                } else if (temp >= 75) {
+                    link1.setAttribute('stroke', 'url(#arm-metal-warn)');
+                    link2.setAttribute('stroke', 'url(#arm-metal-warn)');
+                    jBase.style.stroke = 'var(--warning)';
+                    jElbow.style.stroke = 'var(--warning)';
+                    jWrist.style.stroke = 'var(--warning)';
+                    gripper.style.stroke = 'var(--warning)';
+                    heatGlow.className = '';
+                    heatGlow.style.fill = 'rgba(245, 158, 11, 0.35)';
+                    heatGlow.setAttribute('r', '15');
+                } else {
+                    link1.setAttribute('stroke', 'url(#arm-metal)');
+                    link2.setAttribute('stroke', 'url(#arm-metal)');
+                    jBase.style.stroke = '#6366f1';
+                    jElbow.style.stroke = '#6366f1';
+                    jWrist.style.stroke = '#6366f1';
+                    gripper.style.stroke = '#6366f1';
+                    heatGlow.className = '';
+                    heatGlow.style.fill = 'rgba(244, 63, 94, 0)';
+                }
+
+                // 3. Pressure line animation
+                if (pres <= 0.12) {
+                    hose.className = 'pulsing-hose';
+                    hose.style.stroke = 'var(--danger)';
+                } else if (pres <= 0.22) {
+                    hose.className = 'flowing-hose';
+                    hose.style.setProperty('--hose-speed', '0.25s');
+                    hose.style.stroke = 'var(--warning)';
+                } else {
+                    hose.className = 'flowing-hose';
+                    const speedSec = Math.max(0.3, 1.6 - (pres * 2)) + 's';
+                    hose.style.setProperty('--hose-speed', speedSec);
+                    hose.style.stroke = 'rgba(16, 185, 129, 0.6)';
+                }
+            }
         }
 
         function applyDialColorAlert(element, val, warnLimit, dangerLimit, isInverse = false) {
@@ -2154,9 +2490,12 @@
                 diagAlertPill.innerHTML = '🟢 NORMAL — Operational';
                 gsap.fromTo(diagAlertPill, { scale: 0.95 }, { scale: 1.0, duration: 0.3, ease: "power2.out" });
             }
+
+            // Update the Safety Checklist
+            updateOperatorChecklist(probability);
         }
 
-        // Render SHAP contribution cards with elastic GSAP bars
+        // Render SHAP contribution cards with bidirectional Tornado bars and hover highlight dials
         function updateSHAPVisualizer(factors, pctText) {
             diagnosticsShapContainer.innerHTML = '';
             
@@ -2167,43 +2506,142 @@
 
             factors.forEach(f => {
                 const fillClass = f.shap_contribution > 0 ? 'increase-risk' : 'reduce-risk';
-                let scaledPercentage = Math.min(100, Math.abs(f.shap_contribution) * 15);
-                if (scaledPercentage < 5) scaledPercentage = 8; // min visible bar width
+                // Scale so that 1.0 SHAP contribution takes 100% of half width (60% scale factor for visual balance)
+                let scaledPercentage = Math.min(100, Math.abs(f.shap_contribution) * 60);
+                if (scaledPercentage < 4) scaledPercentage = 6;
                 
                 const sign = f.shap_contribution > 0 ? '+' : '';
-                const formatContribVal = `${sign}${f.shap_contribution}`;
+                const formatContribVal = `${sign}${f.shap_contribution.toFixed(4)}`;
                 
                 const row = document.createElement('div');
                 row.className = 'shap-factor-row-item';
                 row.innerHTML = `
                     <div class="shap-factor-meta-lbl">
                         <span class="shap-factor-tag">${formatSHAPFeatureName(f.feature)}</span>
-                        <span class="shap-factor-contrib">${f.value.toFixed(2)} (${formatContribVal})</span>
+                        <span class="shap-factor-contrib" style="color: ${f.shap_contribution > 0 ? 'var(--danger)' : 'var(--success)'};">${f.value.toFixed(2)} (${formatContribVal})</span>
                     </div>
                     <div class="shap-progress-container">
-                        <div class="shap-progress-fill ${fillClass}" style="width: ${scaledPercentage}%"></div>
+                        <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,0.15); z-index: 2;"></div>
+                        <div class="shap-progress-left" style="width: ${f.shap_contribution < 0 ? scaledPercentage : 0}%"></div>
+                        <div class="shap-progress-right" style="width: ${f.shap_contribution > 0 ? scaledPercentage : 0}%"></div>
                     </div>
                 `;
+                
+                // Highlight corresponding telemetry dials on hover
+                row.addEventListener('mouseenter', () => {
+                    const feat = f.feature.toLowerCase();
+                    if (feat.includes('vibration')) {
+                        const dial = document.querySelector('.hardware-dial-card:nth-child(1)');
+                        if (dial) {
+                            dial.style.boxShadow = '0 0 18px var(--primary-glow)';
+                            dial.style.borderColor = 'var(--primary-light)';
+                            dial.style.transform = 'scale(1.02)';
+                        }
+                    } else if (feat.includes('temperature')) {
+                        const dial = document.querySelector('.hardware-dial-card:nth-child(2)');
+                        if (dial) {
+                            dial.style.boxShadow = '0 0 18px rgba(245, 158, 11, 0.25)';
+                            dial.style.borderColor = 'var(--warning)';
+                            dial.style.transform = 'scale(1.02)';
+                        }
+                    } else if (feat.includes('pressure')) {
+                        const dial = document.querySelector('.hardware-dial-card:nth-child(3)');
+                        if (dial) {
+                            dial.style.boxShadow = '0 0 18px rgba(16, 185, 129, 0.25)';
+                            dial.style.borderColor = 'var(--success)';
+                            dial.style.transform = 'scale(1.02)';
+                        }
+                    }
+                });
+                
+                row.addEventListener('mouseleave', () => {
+                    document.querySelectorAll('.hardware-dial-card').forEach(card => {
+                        card.style.boxShadow = 'none';
+                        card.style.borderColor = 'rgba(255,255,255,0.02)';
+                        card.style.transform = 'none';
+                    });
+                });
                 
                 diagnosticsShapContainer.appendChild(row);
             });
 
-            // GSAP elastic pop animation
-            gsap.from(".shap-progress-fill", {
-                width: "0%",
-                duration: 0.9,
-                stagger: 0.08,
-                ease: "elastic.out(1, 0.75)"
+            // GSAP reveal animation
+            gsap.from(".shap-progress-left, .shap-progress-right", {
+                scaleX: 0,
+                duration: 0.65,
+                stagger: 0.05,
+                ease: "power2.out"
             });
 
             const topDriver = factors[0];
             const directionLabel = topDriver.shap_contribution > 0 ? 'escalating risk' : 'dampening risk';
             diagnosticsShapExplanationSummary.innerText = `
-                Robotic arm has a ${pctText} failure risk. The absolute primary predictive factor is ${formatSHAPFeatureName(topDriver.feature)} at ${topDriver.value.toFixed(2)}, actively ${directionLabel} with a SHAP coefficient weight of ${topDriver.shap_contribution}.
+                Robotic arm has a ${pctText} failure risk. The absolute primary predictive factor is ${formatSHAPFeatureName(topDriver.feature)} at ${topDriver.value.toFixed(2)}, actively ${directionLabel} with a SHAP weight of ${topDriver.shap_contribution.toFixed(4)}.
             `;
 
             // Fade explanation text
             gsap.from("#diagnostics-shap-explanation-summary", { opacity: 0, x: 8, duration: 0.45, ease: "power2.out" });
+        }
+
+        // Safety Checklist populator
+        function updateOperatorChecklist(probability) {
+            const container = document.getElementById('checklist-items-container');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            let items = [];
+            if (probability >= 0.7) {
+                items = [
+                    { id: 'crit-maint', text: '⚠️ EMERGENCY: Dispatch mechanical team for immediate joint overhaul.', bold: true },
+                    { id: 'crit-override', text: 'Initiate controller emergency lock down sequence.' },
+                    { id: 'crit-pressure', text: 'Flush hydraulic pressure lines to clear potential lock valves.' },
+                    { id: 'crit-calib', text: 'Verify sensor calibration offsets for joint encoder values.' }
+                ];
+            } else if (probability >= 0.4) {
+                items = [
+                    { id: 'warn-cool', text: 'Inspect and replace thermal dust filters and fan motors.', bold: true },
+                    { id: 'warn-std', text: 'Analyze rolling standard deviation profiles in history graphs.' },
+                    { id: 'warn-oil', text: 'Check hydraulic oil viscosity and joint lubricant levels.' },
+                    { id: 'warn-check', text: 'Notify shift floor supervisor of anomalous sensor telemetry.' }
+                ];
+            } else {
+                items = [
+                    { id: 'norm-monitor', text: 'Observe active telemetry feeds (no intervention required).' },
+                    { id: 'norm-monthly', text: 'Standard monthly scheduled calibration check.' },
+                    { id: 'norm-verify', text: 'Verify automated data log archival sync logs.' }
+                ];
+            }
+            
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'checklist-item';
+                if (item.bold) div.style.color = '#fff';
+                
+                div.innerHTML = `
+                    <input type="checkbox" id="${item.id}" class="checklist-checkbox" onchange="toggleChecklistItem('${item.id}', this)">
+                    <label for="${item.id}" style="${item.bold ? 'font-weight:600;' : ''}">${item.text}</label>
+                `;
+                container.appendChild(div);
+            });
+            
+            gsap.from(".checklist-item", {
+                opacity: 0,
+                y: 10,
+                duration: 0.4,
+                stagger: 0.05,
+                ease: "power2.out"
+            });
+        }
+        
+        function toggleChecklistItem(id, checkbox) {
+            const item = checkbox.parentElement;
+            if (checkbox.checked) {
+                item.classList.add('done');
+                gsap.to(item, { opacity: 0.4, duration: 0.2 });
+            } else {
+                item.classList.remove('done');
+                gsap.to(item, { opacity: 1.0, duration: 0.2 });
+            }
         }
 
         // Format system engineered features to readable titles
