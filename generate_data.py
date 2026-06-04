@@ -37,8 +37,8 @@ for m in range(1, N_MACHINES + 1):
         is_failing = (m % 10 == 0) and (t > READINGS_PER_MACHINE * 0.85)
         # Determine if this is a warning window (last ~15% of readings for some other machines)
         is_warning = (m in [7, 17, 27]) and (t > READINGS_PER_MACHINE * 0.85)
-        # Also inject random failures for ~3% of other readings
-        random_failure = np.random.random() < 0.03
+        # Also inject random failures for ~3% of other readings (only in the historical past)
+        random_failure = (np.random.random() < 0.03) and (t < READINGS_PER_MACHINE * 0.8)
 
         if is_failing:
             vibration = vib_base + np.random.normal(8, 2)  # High vibration
@@ -46,9 +46,9 @@ for m in range(1, N_MACHINES + 1):
             pressure = pres_base - np.random.normal(0.15, 0.05)  # Pressure drop
             failure = 1
         elif is_warning:
-            vibration = 12.0 + np.random.normal(0, 0.1)  # Moderate vibration
-            temperature = 78.0 + np.random.normal(0, 0.2)  # Moderate overheating
-            pressure = 0.29 + np.random.normal(0, 0.005)  # Slight pressure drop
+            vibration = 12.0  # Moderate vibration
+            temperature = 78.0  # Moderate overheating
+            pressure = 0.29  # Slight pressure drop
             failure = 0
         elif random_failure:
             vibration = vib_base + np.random.normal(5, 2)
