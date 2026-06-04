@@ -21,15 +21,22 @@ for m in range(1, N_MACHINES + 1):
     base_time = pd.Timestamp("2025-01-01")
     
     # Normal operating ranges
-    vib_base = np.random.uniform(8, 12)
-    temp_base = np.random.uniform(60, 75)
-    pres_base = np.random.uniform(0.3, 0.5)
+    if m in [7, 17, 27]:
+        vib_base = 10.0
+        temp_base = 65.0
+        pres_base = 0.4
+    else:
+        vib_base = np.random.uniform(8, 12)
+        temp_base = np.random.uniform(60, 75)
+        pres_base = np.random.uniform(0.3, 0.5)
 
     for t in range(READINGS_PER_MACHINE):
         timestamp = base_time + pd.Timedelta(minutes=15 * t)
         
-        # Determine if this is a failure window (last ~5% of readings for some machines)
+        # Determine if this is a failure window (last ~15% of readings for some machines)
         is_failing = (m % 10 == 0) and (t > READINGS_PER_MACHINE * 0.85)
+        # Determine if this is a warning window (last ~15% of readings for some other machines)
+        is_warning = (m in [7, 17, 27]) and (t > READINGS_PER_MACHINE * 0.85)
         # Also inject random failures for ~3% of other readings
         random_failure = np.random.random() < 0.03
 
@@ -38,6 +45,11 @@ for m in range(1, N_MACHINES + 1):
             temperature = temp_base + np.random.normal(20, 5)  # Overheating
             pressure = pres_base - np.random.normal(0.15, 0.05)  # Pressure drop
             failure = 1
+        elif is_warning:
+            vibration = 12.0 + np.random.normal(0, 0.1)  # Moderate vibration
+            temperature = 78.0 + np.random.normal(0, 0.2)  # Moderate overheating
+            pressure = 0.29 + np.random.normal(0, 0.005)  # Slight pressure drop
+            failure = 0
         elif random_failure:
             vibration = vib_base + np.random.normal(5, 2)
             temperature = temp_base + np.random.normal(12, 4)
