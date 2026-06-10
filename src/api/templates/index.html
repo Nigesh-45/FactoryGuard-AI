@@ -17,6 +17,10 @@
     <!-- GSAP (GreenSock Animation Platform) for high-end micro-animations -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 
+    <!-- Three.js and OrbitControls for 3D Robotic Arm Visualizer -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
     <style>
         :root {
             --bg-dark: #070913;
@@ -1242,68 +1246,24 @@
             }
         }
         
-        /* ── SVG Robotic Arm Visualizer styles ── */
+        /* ── 3D Robotic Arm Visualizer styles ── */
         .arm-svg-card {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 240px;
+            min-height: 340px;
             overflow: hidden;
             position: relative;
             background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.08), rgba(16, 24, 48, 0.45)) !important;
         }
 
-        .arm-svg-container {
+        .arm-3d-container {
             width: 100%;
-            max-width: 320px;
-            height: 190px;
+            height: 270px;
             position: relative;
-        }
-
-        #robotic-arm-svg {
-            width: 100%;
-            height: 100%;
-            transition: all 0.3s ease;
-        }
-
-        @keyframes shake-arm {
-            0% { transform: translate(0, 0) rotate(0deg); }
-            20% { transform: translate(calc(var(--shake-amt) * -0.8px), calc(var(--shake-amt) * 0.8px)) rotate(calc(var(--shake-amt) * -0.05deg)); }
-            40% { transform: translate(calc(var(--shake-amt) * 0.8px), calc(var(--shake-amt) * -0.8px)) rotate(calc(var(--shake-amt) * 0.05deg)); }
-            60% { transform: translate(calc(var(--shake-amt) * -0.8px), calc(var(--shake-amt) * -0.8px)) rotate(calc(var(--shake-amt) * -0.05deg)); }
-            80% { transform: translate(calc(var(--shake-amt) * 0.8px), calc(var(--shake-amt) * 0.8px)) rotate(calc(var(--shake-amt) * 0.05deg)); }
-            100% { transform: translate(0, 0) rotate(0deg); }
-        }
-
-        .shaking-arm #arm-group {
-            animation: shake-arm 0.08s infinite linear;
-        }
-
-        @keyframes flow-hose {
-            to { stroke-dashoffset: -20; }
-        }
-
-        .flowing-hose {
-            animation: flow-hose var(--hose-speed, 1s) infinite linear;
-        }
-
-        @keyframes pulse-danger-hose {
-            0% { stroke: var(--danger); stroke-width: 2.5px; opacity: 0.6; }
-            100% { stroke: #ef4444; stroke-width: 3.5px; opacity: 1; }
-        }
-
-        .pulsing-hose {
-            animation: pulse-danger-hose 0.5s infinite alternate ease-in-out;
-        }
-
-        @keyframes pulse-heat {
-            0% { fill: rgba(244, 63, 94, 0.1); r: 12px; }
-            100% { fill: rgba(244, 63, 94, 0.45); r: 24px; }
-        }
-
-        .pulsing-heat {
-            animation: pulse-heat 0.8s infinite alternate ease-in-out;
+            border-radius: 12px;
+            overflow: hidden;
         }
 
         /* ── Dynamic Glowing Card Effects ── */
@@ -1597,57 +1557,8 @@
                             <span>Robotic Arm State Visualizer</span>
                             <span style="font-size: 0.72rem; text-transform: none; color: var(--text-muted);" id="arm-visual-state">Active Feed</span>
                         </h3>
-                        <div class="arm-svg-container">
-                            <svg id="robotic-arm-svg" viewBox="0 0 200 150">
-                                <defs>
-                                    <linearGradient id="arm-metal" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stop-color="#818cf8" />
-                                        <stop offset="100%" stop-color="#6366f1" />
-                                    </linearGradient>
-                                    <linearGradient id="arm-metal-warn" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stop-color="#fbbf24" />
-                                        <stop offset="100%" stop-color="#d97706" />
-                                    </linearGradient>
-                                    <linearGradient id="arm-metal-danger" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stop-color="#f87171" />
-                                        <stop offset="100%" stop-color="#dc2626" />
-                                    </linearGradient>
-                                    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                                        <feGaussianBlur stdDeviation="3" result="blur" />
-                                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                                    </filter>
-                                </defs>
-                                
-                                <!-- Base platform -->
-                                <path d="M 20,135 L 180,135 L 160,145 L 40,145 Z" fill="rgba(255, 255, 255, 0.03)" stroke="rgba(255, 255, 255, 0.12)" stroke-width="1.5" />
-                                <rect x="85" y="115" width="30" height="20" rx="3" fill="#0b0f19" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
-                                
-                                <!-- Hydraulic Hose (Pressure Line) -->
-                                <path id="hydraulic-hose" d="M 100,125 Q 70,85 100,55" fill="none" stroke="rgba(16, 185, 129, 0.5)" stroke-width="2.5" stroke-dasharray="4, 4" class="flowing-hose" />
-                                
-                                <g id="arm-group">
-                                    <!-- Link 1 -->
-                                    <line x1="100" y1="125" x2="100" y2="75" stroke="url(#arm-metal)" stroke-width="8" stroke-linecap="round" id="link-1" />
-                                    
-                                    <!-- Base Joint -->
-                                    <circle cx="100" cy="125" r="10" fill="#0b0f19" stroke="#6366f1" stroke-width="3" id="joint-base" />
-                                    
-                                    <!-- Link 2 -->
-                                    <line x1="100" y1="75" x2="140" y2="45" stroke="url(#arm-metal)" stroke-width="6" stroke-linecap="round" id="link-2" />
-                                    
-                                    <!-- Elbow Joint -->
-                                    <circle cx="100" cy="75" r="8" fill="#0b0f19" stroke="#6366f1" stroke-width="2.5" id="joint-elbow" />
-                                    
-                                    <!-- Wrist Joint -->
-                                    <circle cx="140" cy="45" r="6" fill="#0b0f19" stroke="#6366f1" stroke-width="2" id="joint-wrist" />
-                                    
-                                    <!-- Gripper Tool Head -->
-                                    <path d="M 140,45 L 148,37 M 140,45 L 148,53 M 148,35 L 154,39 M 148,55 L 154,51" stroke="#6366f1" stroke-width="2" stroke-linecap="round" fill="none" id="gripper" />
-                                    
-                                    <!-- Heat hotspots -->
-                                    <circle cx="100" cy="75" r="18" fill="rgba(244, 63, 94, 0)" id="heat-glow" filter="url(#glow)" />
-                                </g>
-                            </svg>
+                        <div class="arm-3d-container" id="arm-3d-viewport">
+                            <div id="canvas-loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--text-muted); font-size: 0.85rem; pointer-events: none; font-family: var(--font-inter);">Initializing 3D Space...</div>
                         </div>
                     </div>
                     
@@ -1886,6 +1797,22 @@
         let activeTab = 'fleet';
         let currentFilter = 'all';
 
+        // 3D Robotic Arm Visualizer Globals
+        let scene3D, camera3D, renderer3D, controls3D;
+        let armGroup3D, baseJoint3D, elbowJoint3D, wristJoint3D;
+        let link1Mesh3D, link2Mesh3D, gripperBase3D, fingerLeft3D, fingerRight3D;
+        let pistonBarrel3D, pistonShaft3D;
+        let sparkParticles3D, sparkVelocities3D = [];
+        window.telemetryVib = 10.0;
+        window.telemetryTemp = 65.0;
+        window.telemetryPres = 0.40;
+        let currentVib = 10.0;
+        let currentTemp = 65.0;
+        let currentPres = 0.40;
+        let currentSpeed = 1.0;
+        let timeVar3D = 0.0;
+        let is3DInitialized = false;
+
         // DOM elements
         const diagArmId = document.getElementById('diag-arm-id');
         const diagStateBadge = document.getElementById('diag-state-badge');
@@ -1919,6 +1846,7 @@
             fetchFleetData();
             initTrendChart();
             initShapeGrid();
+            init3DArm();
             
             // GSAP Page Intro animations
             gsap.from(".sidebar", { opacity: 0, x: -50, duration: 1.0, ease: "power3.out" });
@@ -2246,81 +2174,35 @@
                 ease: "power2.out"
             });
 
-            // ── SVG Robotic Arm Animations ──
-            const svgArm = document.getElementById('robotic-arm-svg');
-            const link1 = document.getElementById('link-1');
-            const link2 = document.getElementById('link-2');
-            const jBase = document.getElementById('joint-base');
-            const jElbow = document.getElementById('joint-elbow');
-            const jWrist = document.getElementById('joint-wrist');
-            const gripper = document.getElementById('gripper');
-            const heatGlow = document.getElementById('heat-glow');
-            const hose = document.getElementById('hydraulic-hose');
-            const vState = document.getElementById('arm-visual-state');
+            // Update 3D visualizer targets
+            window.telemetryVib = vib;
+            window.telemetryTemp = temp;
+            window.telemetryPres = pres;
 
-            if (svgArm) {
-                // 1. Shaking for vibration
+            // Update diagnostic text labels
+            const vState = document.getElementById('arm-visual-state');
+            if (vState) {
                 if (vib >= 18) {
-                    const shakeAmt = Math.min(8, (vib - 18) * 0.5 + 4);
-                    svgArm.style.setProperty('--shake-amt', shakeAmt);
-                    svgArm.classList.add('shaking-arm');
                     vState.innerText = "⚠️ High Vibration Flutter";
                     vState.style.color = "var(--danger)";
                 } else if (vib >= 14) {
-                    const shakeAmt = (vib - 14) * 0.4 + 1.5;
-                    svgArm.style.setProperty('--shake-amt', shakeAmt);
-                    svgArm.classList.add('shaking-arm');
                     vState.innerText = "⚡ Joint Friction Wobble";
                     vState.style.color = "var(--warning)";
+                } else if (temp >= 90) {
+                    vState.innerText = "🔥 Thermal Overload Alert";
+                    vState.style.color = "var(--danger)";
+                } else if (temp >= 75) {
+                    vState.innerText = "🌡️ Thermal Exhaust Threshold";
+                    vState.style.color = "var(--warning)";
+                } else if (pres <= 0.12) {
+                    vState.innerText = "🚨 Low Hydraulic Pressure";
+                    vState.style.color = "var(--danger)";
+                } else if (pres <= 0.22) {
+                    vState.innerText = "📉 Pressure Line Drop";
+                    vState.style.color = "var(--warning)";
                 } else {
-                    svgArm.classList.remove('shaking-arm');
                     vState.innerText = "Active Feed";
                     vState.style.color = "var(--text-muted)";
-                }
-
-                // 2. Heat glow for temperature
-                if (temp >= 90) {
-                    link1.setAttribute('stroke', 'url(#arm-metal-danger)');
-                    link2.setAttribute('stroke', 'url(#arm-metal-danger)');
-                    jBase.style.stroke = 'var(--danger)';
-                    jElbow.style.stroke = 'var(--danger)';
-                    jWrist.style.stroke = 'var(--danger)';
-                    gripper.style.stroke = 'var(--danger)';
-                    heatGlow.className = 'pulsing-heat';
-                } else if (temp >= 75) {
-                    link1.setAttribute('stroke', 'url(#arm-metal-warn)');
-                    link2.setAttribute('stroke', 'url(#arm-metal-warn)');
-                    jBase.style.stroke = 'var(--warning)';
-                    jElbow.style.stroke = 'var(--warning)';
-                    jWrist.style.stroke = 'var(--warning)';
-                    gripper.style.stroke = 'var(--warning)';
-                    heatGlow.className = '';
-                    heatGlow.style.fill = 'rgba(245, 158, 11, 0.35)';
-                    heatGlow.setAttribute('r', '15');
-                } else {
-                    link1.setAttribute('stroke', 'url(#arm-metal)');
-                    link2.setAttribute('stroke', 'url(#arm-metal)');
-                    jBase.style.stroke = '#6366f1';
-                    jElbow.style.stroke = '#6366f1';
-                    jWrist.style.stroke = '#6366f1';
-                    gripper.style.stroke = '#6366f1';
-                    heatGlow.className = '';
-                    heatGlow.style.fill = 'rgba(244, 63, 94, 0)';
-                }
-
-                // 3. Pressure line animation
-                if (pres <= 0.12) {
-                    hose.className = 'pulsing-hose';
-                    hose.style.stroke = 'var(--danger)';
-                } else if (pres <= 0.22) {
-                    hose.className = 'flowing-hose';
-                    hose.style.setProperty('--hose-speed', '0.25s');
-                    hose.style.stroke = 'var(--warning)';
-                } else {
-                    hose.className = 'flowing-hose';
-                    const speedSec = Math.max(0.3, 1.6 - (pres * 2)) + 's';
-                    hose.style.setProperty('--hose-speed', speedSec);
-                    hose.style.stroke = 'rgba(16, 185, 129, 0.6)';
                 }
             }
         }
@@ -2342,12 +2224,15 @@
             if (sensor === 'vibration') {
                 const v = parseFloat(inputVibration.value);
                 slideVibrationVal.innerText = `${v.toFixed(1)} mm/s`;
+                window.telemetryVib = v;
             } else if (sensor === 'temperature') {
                 const v = parseFloat(inputTemperature.value);
                 slideTemperatureVal.innerText = `${v.toFixed(1)} °C`;
+                window.telemetryTemp = v;
             } else if (sensor === 'pressure') {
                 const v = parseFloat(inputPressure.value);
                 slidePressureVal.innerText = `${v.toFixed(2)} Bar`;
+                window.telemetryPres = v;
             }
         }
 
@@ -3006,6 +2891,374 @@
             document.addEventListener('mouseleave', handleMouseLeave);
 
             requestAnimationFrame(updateAnimation);
+        }
+
+        // ── 3D Robotic Arm Visualizer Scene Construction & Loop ──
+        function init3DArm() {
+            const container = document.getElementById('arm-3d-viewport');
+            if (!container) return;
+
+            const width = container.clientWidth || 320;
+            const height = container.clientHeight || 250;
+
+            // 1. Scene & Camera Setup
+            scene3D = new THREE.Scene();
+            
+            camera3D = new THREE.PerspectiveCamera(45, width / height, 0.1, 50);
+            camera3D.position.set(7, 5, 7);
+
+            // 2. Renderer Setup
+            renderer3D = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer3D.setSize(width, height);
+            renderer3D.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer3D.shadowMap.enabled = true;
+            renderer3D.shadowMap.type = THREE.PCFSoftShadowMap;
+            
+            // Clear loading placeholder
+            const loading = document.getElementById('canvas-loading');
+            if (loading) loading.style.display = 'none';
+
+            container.appendChild(renderer3D.domElement);
+
+            // 3. OrbitControls
+            controls3D = new THREE.OrbitControls(camera3D, renderer3D.domElement);
+            controls3D.enableDamping = true;
+            controls3D.dampingFactor = 0.05;
+            controls3D.maxPolarAngle = Math.PI / 2 - 0.05; // Stay above grid floor
+            controls3D.minDistance = 4;
+            controls3D.maxDistance = 12;
+
+            // 4. Lights
+            const ambientLight = new THREE.AmbientLight(0x0e172c, 2.0); // soft dark blue fill
+            scene3D.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+            dirLight.position.set(5, 10, 5);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 512;
+            dirLight.shadow.mapSize.height = 512;
+            dirLight.shadow.bias = -0.0005;
+            scene3D.add(dirLight);
+
+            // Spotlight highlighting the arm
+            const spotLight = new THREE.SpotLight(0x6366f1, 4.0, 15, Math.PI / 6, 0.5, 1);
+            spotLight.position.set(0, 8, 0);
+            spotLight.target.position.set(0, 1, 0);
+            scene3D.add(spotLight);
+            scene3D.add(spotLight.target);
+
+            // 5. Grid Floor
+            const gridHelper = new THREE.GridHelper(10, 16, 0x6366f1, 0x1e293b);
+            gridHelper.position.y = -0.5;
+            gridHelper.material.opacity = 0.18;
+            gridHelper.material.transparent = true;
+            scene3D.add(gridHelper);
+
+            // 6. Materials
+            const baseMaterial = new THREE.MeshStandardMaterial({
+                color: 0x111827,
+                roughness: 0.5,
+                metalness: 0.8
+            });
+            const structureMaterial = new THREE.MeshStandardMaterial({
+                color: 0x4f46e5,
+                roughness: 0.2,
+                metalness: 0.9
+            });
+            const chromeMaterial = new THREE.MeshStandardMaterial({
+                color: 0xf1f5f9,
+                roughness: 0.05,
+                metalness: 0.95
+            });
+            const jointMaterial = new THREE.MeshStandardMaterial({
+                color: 0x1e293b,
+                emissive: 0x6366f1,
+                emissiveIntensity: 0.15,
+                roughness: 0.3,
+                metalness: 0.9
+            });
+
+            // 7. Assemble the 3D Robotic Arm
+            armGroup3D = new THREE.Group();
+            scene3D.add(armGroup3D);
+
+            // Base pedestal stand
+            const baseGeo = new THREE.CylinderGeometry(0.7, 0.8, 0.4, 16);
+            const baseStandMesh = new THREE.Mesh(baseGeo, baseMaterial);
+            baseStandMesh.position.y = -0.3; // slightly embedded in floor
+            baseStandMesh.receiveShadow = true;
+            baseStandMesh.castShadow = true;
+            armGroup3D.add(baseStandMesh);
+
+            // Base joint (Y rotation)
+            baseJoint3D = new THREE.Group();
+            baseJoint3D.position.y = -0.1;
+            armGroup3D.add(baseJoint3D);
+
+            const jointBaseMesh = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), jointMaterial);
+            jointBaseMesh.castShadow = true;
+            baseJoint3D.add(jointBaseMesh);
+
+            // Link 1 (Lower Arm segment)
+            const link1Group = new THREE.Group();
+            baseJoint3D.add(link1Group);
+
+            const link1Mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 1.8, 12), structureMaterial);
+            link1Mesh.position.y = 0.9; // offset cylinder center so bottom is at Y=0
+            link1Mesh.castShadow = true;
+            link1Mesh.receiveShadow = true;
+            link1Group.add(link1Mesh);
+            link1Mesh3D = link1Mesh;
+
+            // Elbow Joint (Z rotation pivot at top of Link 1)
+            elbowJoint3D = new THREE.Group();
+            elbowJoint3D.position.y = 1.8;
+            baseJoint3D.add(elbowJoint3D);
+
+            const elbowSphereMesh = new THREE.Mesh(new THREE.SphereGeometry(0.28, 16, 16), jointMaterial);
+            elbowSphereMesh.castShadow = true;
+            elbowJoint3D.add(elbowSphereMesh);
+            window.elbowMesh3DRef = elbowSphereMesh;
+
+            // Link 2 (Upper Arm Segment)
+            const link2Group = new THREE.Group();
+            elbowJoint3D.add(link2Group);
+
+            const link2Mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 1.4, 12), structureMaterial);
+            link2Mesh.position.y = 0.7; // offset center
+            link2Mesh.castShadow = true;
+            link2Mesh.receiveShadow = true;
+            link2Group.add(link2Mesh);
+            link2Mesh3D = link2Mesh;
+
+            // Wrist Joint
+            wristJoint3D = new THREE.Group();
+            wristJoint3D.position.y = 1.4;
+            elbowJoint3D.add(wristJoint3D);
+
+            const wristSphereMesh = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 12), jointMaterial);
+            wristSphereMesh.castShadow = true;
+            wristJoint3D.add(wristSphereMesh);
+
+            // Gripper Tool Head
+            gripperBase3D = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.18, 0.28), baseMaterial);
+            gripperBase3D.position.y = 0.12;
+            gripperBase3D.castShadow = true;
+            wristJoint3D.add(gripperBase3D);
+
+            // Gripper Fingers
+            const fingerGeo = new THREE.BoxGeometry(0.04, 0.15, 0.06);
+            fingerLeft3D = new THREE.Mesh(fingerGeo, chromeMaterial);
+            fingerLeft3D.position.set(-0.06, 0.25, 0);
+            fingerLeft3D.castShadow = true;
+            wristJoint3D.add(fingerLeft3D);
+
+            fingerRight3D = new THREE.Mesh(fingerGeo, chromeMaterial);
+            fingerRight3D.position.set(0.06, 0.25, 0);
+            fingerRight3D.castShadow = true;
+            wristJoint3D.add(fingerRight3D);
+
+            // Hydraulic lifter cylinder
+            const cylinderGroup = new THREE.Group();
+            cylinderGroup.position.set(0.22, 0.1, 0); // mount offset on side
+            baseJoint3D.add(cylinderGroup);
+
+            pistonBarrel3D = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.9, 12), baseMaterial);
+            pistonBarrel3D.position.y = 0.45;
+            pistonBarrel3D.castShadow = true;
+            pistonBarrel3D.receiveShadow = true;
+            cylinderGroup.add(pistonBarrel3D);
+
+            pistonShaft3D = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, 0.9, 12), chromeMaterial);
+            pistonShaft3D.position.y = 0.45; // slides dynamically
+            pistonShaft3D.castShadow = true;
+            cylinderGroup.add(pistonShaft3D);
+
+            // 8. Custom rising heat particle sparks
+            const particleCount = 45;
+            const sparkGeometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            
+            for (let i = 0; i < particleCount; i++) {
+                positions[i*3] = 0;
+                positions[i*3+1] = -100; // start hidden
+                positions[i*3+2] = 0;
+                sparkVelocities3D.push({
+                    x: (Math.random() - 0.5) * 0.4,
+                    y: Math.random() * 0.8 + 0.3,
+                    z: (Math.random() - 0.5) * 0.4,
+                    life: 0.0
+                });
+            }
+            sparkGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const createSparkTexture = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = 16;
+                canvas.height = 16;
+                const ctx = canvas.getContext('2d');
+                const grad = ctx.createRadialGradient(8, 8, 0, 8, 8, 8);
+                grad.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
+                grad.addColorStop(0.3, 'rgba(239, 68, 68, 0.85)');
+                grad.addColorStop(0.8, 'rgba(239, 68, 68, 0.15)');
+                grad.addColorStop(1, 'rgba(239, 68, 68, 0.0)');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, 16, 16);
+                return new THREE.CanvasTexture(canvas);
+            };
+
+            const sparkMaterial = new THREE.PointsMaterial({
+                size: 0.16,
+                map: createSparkTexture(),
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+
+            sparkParticles3D = new THREE.Points(sparkGeometry, sparkMaterial);
+            scene3D.add(sparkParticles3D);
+
+            // 9. Resize Handling
+            window.addEventListener('resize', () => {
+                const w = container.clientWidth || 320;
+                const h = container.clientHeight || 250;
+                camera3D.aspect = w / h;
+                camera3D.updateProjectionMatrix();
+                renderer3D.setSize(w, h);
+            });
+
+            is3DInitialized = true;
+            
+            // Kick off loop
+            animate3DArm();
+        }
+
+        function animate3DArm() {
+            if (!is3DInitialized) return;
+            requestAnimationFrame(animate3DArm);
+
+            // Smoothly lerp parameters (dampened transitions)
+            currentVib += (window.telemetryVib - currentVib) * 0.08;
+            currentTemp += (window.telemetryTemp - currentTemp) * 0.08;
+            currentPres += (window.telemetryPres - currentPres) * 0.08;
+
+            // Update Controls
+            controls3D.update();
+
+            // Calculate Speed Factor
+            let speedFactor = 1.0;
+            if (currentPres <= 0.12) speedFactor = 0.15;
+            else if (currentPres <= 0.22) speedFactor = 0.45;
+            else speedFactor = 0.7 + (currentPres - 0.22) * 0.5;
+
+            // Hydraulic Piston jerkiness/stutter under low pressure
+            let stutter = 1.0;
+            if (currentPres <= 0.22 && Math.sin(timeVar3D * 12) < -0.75) {
+                stutter = 0.05; // Momentary mechanical lockup/jerk
+            }
+
+            timeVar3D += 0.02 * speedFactor * stutter;
+
+            // 1. Idle path robotic motion (sinusoidal cycles)
+            baseJoint3D.rotation.y = Math.sin(timeVar3D * 0.6) * 0.8;
+            const elbowTargetAngle = (Math.sin(timeVar3D * 1.0) * 0.35) - 0.45;
+            elbowJoint3D.rotation.z = elbowTargetAngle;
+            wristJoint3D.rotation.z = Math.sin(timeVar3D * 1.6) * 0.25;
+
+            // Open/close gripper fingers
+            const fingerGap = Math.abs(Math.sin(timeVar3D * 1.8)) * 0.08 + 0.02;
+            fingerLeft3D.position.x = -0.04 - fingerGap;
+            fingerRight3D.position.x = 0.04 + fingerGap;
+
+            // 2. Hydraulic lifter piston synchronization
+            const pistonSlide = 0.35 + (elbowTargetAngle + 0.8) * 0.3;
+            pistonShaft3D.position.y = pistonSlide;
+
+            // 3. Vibration shaking simulation
+            if (currentVib >= 14) {
+                const ratio = Math.min(1.0, (currentVib - 14) / 11);
+                const magnitude = ratio * 0.08; // maximum tremor displacement
+                
+                // Jitter joint rotations
+                baseJoint3D.rotation.y += (Math.random() - 0.5) * magnitude;
+                elbowJoint3D.rotation.z += (Math.random() - 0.5) * magnitude;
+                wristJoint3D.rotation.z += (Math.random() - 0.5) * magnitude;
+
+                // Jitter base displacement
+                armGroup3D.position.x = (Math.random() - 0.5) * magnitude * 0.4;
+                armGroup3D.position.z = (Math.random() - 0.5) * magnitude * 0.4;
+                armGroup3D.position.y = (Math.random() - 0.5) * magnitude * 0.2;
+            } else {
+                armGroup3D.position.set(0, 0, 0);
+            }
+
+            // 4. Thermal stress joint glow and particle vents
+            if (window.elbowMesh3DRef) {
+                if (currentTemp >= 90) {
+                    window.elbowMesh3DRef.material.emissive.setHex(0xf43f5e);
+                    window.elbowMesh3DRef.material.emissiveIntensity = 1.0 + Math.sin(Date.now() * 0.01) * 0.3;
+                    window.elbowMesh3DRef.material.color.setHex(0xe11d48);
+                } else if (currentTemp >= 75) {
+                    window.elbowMesh3DRef.material.emissive.setHex(0xf59e0b);
+                    window.elbowMesh3DRef.material.emissiveIntensity = 0.6;
+                    window.elbowMesh3DRef.material.color.setHex(0xd97706);
+                } else {
+                    window.elbowMesh3DRef.material.emissive.setHex(0x6366f1);
+                    window.elbowMesh3DRef.material.emissiveIntensity = 0.15;
+                    window.elbowMesh3DRef.material.color.setHex(0x1e293b);
+                }
+            }
+
+            // Update spark particle emitters
+            if (sparkParticles3D) {
+                if (currentTemp >= 75) {
+                    sparkParticles3D.visible = true;
+                    
+                    const posAttr = sparkParticles3D.geometry.attributes.position;
+                    const positions = posAttr.array;
+                    
+                    const elbowWorld = new THREE.Vector3();
+                    if (window.elbowMesh3DRef) {
+                        window.elbowMesh3DRef.getWorldPosition(elbowWorld);
+                    } else {
+                        elbowWorld.set(0, 1.8, 0);
+                    }
+
+                    const ratio = Math.min(1.0, (currentTemp - 75) / 35);
+                    const spawnRate = 0.05 + ratio * 0.15;
+                    
+                    for (let i = 0; i < sparkVelocities3D.length; i++) {
+                        let vel = sparkVelocities3D[i];
+                        
+                        if (vel.life <= 0) {
+                            if (Math.random() < spawnRate) {
+                                positions[i*3] = elbowWorld.x + (Math.random() - 0.5) * 0.15;
+                                positions[i*3+1] = elbowWorld.y + (Math.random() - 0.5) * 0.15;
+                                positions[i*3+2] = elbowWorld.z + (Math.random() - 0.5) * 0.15;
+                                
+                                vel.x = (Math.random() - 0.5) * 0.25;
+                                vel.y = Math.random() * 0.5 + 0.25;
+                                vel.z = (Math.random() - 0.5) * 0.25;
+                                vel.life = 1.0;
+                            } else {
+                                positions[i*3+1] = -100;
+                            }
+                        } else {
+                            positions[i*3] += vel.x * 0.05 * speedFactor;
+                            positions[i*3+1] += vel.y * 0.05 * speedFactor;
+                            positions[i*3+2] += vel.z * 0.05 * speedFactor;
+                            
+                            vel.life -= 0.025;
+                        }
+                    }
+                    posAttr.needsUpdate = true;
+                } else {
+                    sparkParticles3D.visible = false;
+                }
+            }
+
+            // Render
+            renderer3D.render(scene3D, camera3D);
         }
     </script>
 </body>
