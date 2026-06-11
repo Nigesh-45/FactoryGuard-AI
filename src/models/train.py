@@ -104,7 +104,7 @@ class XGBoostTrainer:
         "model__gamma": [0, 0.1, 0.2, 0.5],
     }
 
-    def train(self, X_train, y_train, n_iter: int = 30):
+    def train(self, X_train, y_train, n_iter: int = 5):
         # scale_pos_weight = negative_samples / positive_samples
         scale_pos = (y_train == 0).sum() / (y_train == 1).sum()
 
@@ -126,7 +126,7 @@ class XGBoostTrainer:
             param_distributions=param_dist,
             n_iter=n_iter,
             scoring="f1",          # Optimise for F1, not accuracy!
-            cv=5,
+            cv=3,
             verbose=1,
             random_state=42,
             n_jobs=-1

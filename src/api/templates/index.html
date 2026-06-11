@@ -2003,7 +2003,31 @@
                 return;
             }
 
-            filtered.forEach(m => {
+            // Display limit handling to prevent DOM bloating under 5000 entries
+            const displayLimit = 120;
+            const itemsToRender = filtered.slice(0, displayLimit);
+
+            if (filtered.length > displayLimit) {
+                const infoBox = document.createElement('div');
+                infoBox.className = 'glass-panel';
+                infoBox.style.gridColumn = "1 / -1";
+                infoBox.style.padding = "0.85rem 1.25rem";
+                infoBox.style.fontSize = "0.8rem";
+                infoBox.style.color = "var(--primary-light)";
+                infoBox.style.borderColor = "var(--primary-glow)";
+                infoBox.style.background = "rgba(99, 102, 241, 0.05)";
+                infoBox.style.borderRadius = "10px";
+                infoBox.style.display = "flex";
+                infoBox.style.alignItems = "center";
+                infoBox.style.gap = "0.5rem";
+                infoBox.innerHTML = `
+                    <span>🔍</span>
+                    <span>Showing the first <strong>${displayLimit}</strong> out of <strong>${filtered.length}</strong> active nodes. Use the search bar or category filters to find other machines.</span>
+                `;
+                gridContainer.appendChild(infoBox);
+            }
+
+            itemsToRender.forEach(m => {
                 const isSelected = m.machine_id === selectedMachineId;
                 const statusClass = m.status === 'CRITICAL' ? 'critical-card' : m.status === 'WARNING' ? 'warning-card' : 'normal-card';
                 const statusDot = m.status === 'CRITICAL' ? 'dot-critical' : m.status === 'WARNING' ? 'dot-warning' : 'dot-normal';

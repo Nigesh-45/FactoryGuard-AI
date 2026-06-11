@@ -31,33 +31,50 @@ MODEL_PATH = "models/factoryguard_xgb.joblib"
 explainer = SHAPExplainer(MODEL_PATH)
 print("[API] FactoryGuard AI model loaded and ready.")
 
-# ── In-Memory Telemetry Cache ─────────────────────────────────────────────────
+# ── In-Memory Telemetry & Prediction Cache ─────────────────────────────────────
 # Cache the last 35 readings per machine to enable real-time rolling calculations
-# Each entry is a dict with keys: 'vibration', 'temperature', 'pressure'
 MACHINE_HISTORY = collections.defaultdict(lambda: collections.deque(maxlen=35))
+# Cache the latest predictions per machine
+MACHINE_PREDICTIONS = {}
 
 def init_history_cache():
-    """Load historical sensor data to pre-populate the cache for rolling features."""
+    """Load historical sensor data to pre-populate cache and run initial batch predictions."""
     try:
         csv_path = Path("data/raw/sensor_readings.csv")
         if csv_path.exists():
             df = pd.read_csv(csv_path)
             # Sort by timestamp to ensure chronological order
             df = df.sort_values("timestamp")
-            for _, row in df.iterrows():
+            
+            # 1. Populate history cache
+            for m_id, group in df.groupby("machine_id"):
+                readings = group[["vibration", "temperature", "pressure"]].to_dict("records")
+                MACHINE_HISTORY[m_id].extend(readings)
+                
+            # 2. Vectorized feature engineering for all machines at once (instant)
+            from src.data.data_engineering import TemporalFeatureEngineer
+            engineer = TemporalFeatureEngineer()
+            df_sorted = df.sort_values(["machine_id", "timestamp"])
+            df_features = engineer.engineer(df_sorted)
+            
+            # Get latest engineered feature row per machine
+            df_latest = df_features.groupby("machine_id").last().reset_index()
+            
+            # 3. Batch prediction using XGBoost
+            drop_cols = ["failure", "timestamp", "machine_id"]
+            feat_cols = [c for c in df_latest.columns if c not in drop_cols]
+            X_batch = df_latest[feat_cols]
+            
+            probs = explainer.pipeline.predict_proba(X_batch)[:, 1]
+            for idx, row in df_latest.iterrows():
                 m_id = row["machine_id"]
-                reading = {
-                    "vibration": float(row["vibration"]),
-                    "temperature": float(row["temperature"]),
-                    "pressure": float(row["pressure"])
-                }
-                MACHINE_HISTORY[m_id].append(reading)
-            print(f"[API] Pre-populated history cache for {len(MACHINE_HISTORY)} machines.")
+                MACHINE_PREDICTIONS[m_id] = float(probs[idx])
+                
+            print(f"[API] Cache and batch predictions populated for {len(MACHINE_HISTORY)} machines.")
         else:
-            # Fallback if no file exists yet
             print("[API] No historical readings found. Starting with empty cache.")
     except Exception as e:
-        print(f"[API] Error pre-populating history cache: {e}")
+        print(f"[API] Error pre-populating history cache and predictions: {e}")
 
 # Pre-populate cache on startup
 init_history_cache()
@@ -244,6 +261,7 @@ def predict():
     # Get predictions & SHAP risk factors
     explanation = explainer.explain_prediction(X_input)
     failure_prob = explanation["failure_probability"]
+    MACHINE_PREDICTIONS[machine_id] = float(failure_prob)
 
     # Retrieve optimal thresholds from saved model pipeline
     crit_thresh = getattr(explainer.pipeline, "critical_threshold", 0.7)
@@ -337,22 +355,9 @@ def get_machines():
             continue
         last = readings[-1]
         
-        try:
-            # Reuses the helper method without modifying the cache history
-            X_input = compute_features_from_history(
-                m_id, 
-                last["vibration"], 
-                last["temperature"], 
-                last["pressure"], 
-                append_history=False
-            )
-            prob = float(explainer.pipeline.predict_proba(X_input)[:, 1][0])
-        except Exception as e:
-            print(f"[API] Prediction calculation error for {m_id}: {e}")
-            prob = 0.0
-            
+        prob = MACHINE_PREDICTIONS.get(m_id, 0.0)
         status = "CRITICAL" if prob >= crit_thresh else "WARNING" if prob >= warn_thresh else "NORMAL"
-            
+        
         machines_summary.append({
             "machine_id": m_id,
             "vibration": round(last["vibration"], 2),

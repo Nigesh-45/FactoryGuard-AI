@@ -84,26 +84,34 @@ class TemporalFeatureEngineer:
 
     def engineer(self, df: pd.DataFrame) -> pd.DataFrame:
         df = df.copy()
-        df.set_index("timestamp", inplace=True)
+        
+        # Sort by machine_id and timestamp to ensure correct chronological order per machine
+        df.sort_values(["machine_id", "timestamp"], inplace=True)
+        df.reset_index(drop=True, inplace=True)
+
+        grouped = df.groupby("machine_id")
 
         for col in self.SENSOR_COLS:
+            # Pre-compute lag 1 and lag 2 grouped to avoid bleeding between machines
+            df[f"{col}_lag_1"] = grouped[col].shift(1)
+            df[f"{col}_lag_2"] = grouped[col].shift(2)
+
+            # Group on the lag_1 column for rolling computations
+            gp_lag = df.groupby("machine_id")[f"{col}_lag_1"]
+
             for w in self.WINDOWS:
-                # Rolling Mean — shift(1) prevents leakage
+                # Rolling Mean
                 df[f"{col}_roll_mean_{w}"] = (
-                    df[col].shift(1).rolling(window=w, min_periods=1).mean()
+                    gp_lag.rolling(window=w, min_periods=1).mean().reset_index(level=0, drop=True)
                 )
                 # Rolling Std (volatility indicator)
                 df[f"{col}_roll_std_{w}"] = (
-                    df[col].shift(1).rolling(window=w, min_periods=1).std()
+                    gp_lag.rolling(window=w, min_periods=1).std().reset_index(level=0, drop=True)
                 )
                 # Exponential Moving Average
                 df[f"{col}_ema_{w}"] = (
-                    df[col].shift(1).ewm(span=w, adjust=False).mean()
+                    gp_lag.ewm(span=w, adjust=False).mean().reset_index(level=0, drop=True)
                 )
-
-            # Lag features: t-1 and t-2
-            df[f"{col}_lag_1"] = df[col].shift(1)
-            df[f"{col}_lag_2"] = df[col].shift(2)
 
         # Add physics-based interaction features
         df["thermal_stress_index"] = df["temperature"] * df["vibration"]
@@ -111,7 +119,7 @@ class TemporalFeatureEngineer:
 
         # Drop rows with NaN introduced by lagging
         df.dropna(inplace=True)
-        df.reset_index(inplace=True)
+        df.reset_index(drop=True, inplace=True)
 
         print(f"[FeatureEngineer] Feature matrix shape: {df.shape}")
         return df

@@ -10,8 +10,8 @@ from pathlib import Path
 
 np.random.seed(42)
 
-N_MACHINES = 50
-READINGS_PER_MACHINE = 200  # ~50 hours of data at 15-min intervals
+N_MACHINES = 5000
+READINGS_PER_MACHINE = 35  # Minimal readings to compute rolling features (windows up to 32)
 OUTPUT_DIR = Path("data/raw")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
